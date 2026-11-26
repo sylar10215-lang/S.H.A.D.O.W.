@@ -76,7 +76,6 @@
     button.primary { background: var(--accent); color: #000; font-weight: 700; border: none; }
     button.primary:hover { background: var(--accent-hover); color: #fff; }
 
-    /* Settings Drawer */
     #settingsPanel {
       display: none;
       background: var(--bg-panel);
@@ -91,7 +90,6 @@
     .setting-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
     textarea { resize: vertical; min-height: 70px; font-family: inherit; }
 
-    /* Chat Area */
     #chat {
       flex: 1;
       overflow-y: auto;
@@ -128,7 +126,6 @@
       border: 1px solid rgba(255,255,255,0.15);
     }
 
-    /* Footer */
     footer {
       background: var(--bg-panel);
       padding: 12px;
@@ -180,7 +177,7 @@
   <div class="setting-grid">
     <div class="setting-row">
       <label>OLLAMA SERVER URL</label>
-      <input type="text" id="serverUrl" value="http://192.168.1.2:11434">
+      <input type="text" id="serverUrl" value="http://127.0.0.1:11434">
     </div>
     <div class="setting-row">
       <label>NUM_CTX (ความจำ Token)</label>
@@ -189,10 +186,11 @@
   </div>
   <div class="setting-row">
     <label>SYSTEM PROMPT (คำสั่งควบคุมบุคลิก S.H.A.D.O.W.)</label>
-    <textarea id="systemPrompt"><|think|>off คุณคือ S.H.A.D.O.W. ผู้ช่วย AI ส่วนตัวของ MJ ตอบให้สั้น กระชับ ตรงประเด็นที่สุด ไม่ต้องอารัมภบท ไม่ต้องทวนคำถาม</textarea>
+    <textarea id="systemPrompt"></textarea>
   </div>
   <div style="display: flex; justify-content: flex-end; gap: 8px;">
-    <button class="primary" onclick="saveSettings()">บันทึกการตั้งค่า</button>
+    <button onclick="syncFromHost(true)">ดึงค่าจากโน้ตบุ๊ก</button>
+    <button class="primary" onclick="saveSettings()">บันทึกในเครื่องนี้</button>
   </div>
 </div>
 
@@ -210,13 +208,52 @@
 <script>
   let chatHistory = [];
 
-  // โหลดค่าที่เคยบันทึกไว้เมื่อเปิดเว็บ
-  window.onload = () => {
-    if (localStorage.getItem('shadow_url')) document.getElementById('serverUrl').value = localStorage.getItem('shadow_url');
-    if (localStorage.getItem('shadow_ctx')) document.getElementById('numCtx').value = localStorage.getItem('shadow_ctx');
-    if (localStorage.getItem('shadow_sys')) document.getElementById('systemPrompt').value = localStorage.getItem('shadow_sys');
+  window.onload = async () => {
+    await syncFromHost(false);
     fetchModels();
   };
+
+  // ดึงค่ากลางจากไฟล์ config.json บนโน้ตบุ๊ก
+  async function syncFromHost(forceOverwrite) {
+    try {
+      const res = await fetch('./config.json?t=' + Date.now());
+      if (!res.ok) throw new Error('no config');
+      const cfg = await res.json();
+
+      if (forceOverwrite || !localStorage.getItem('shadow_url')) {
+        if (cfg.serverUrl) {
+          document.getElementById('serverUrl').value = cfg.serverUrl;
+          localStorage.setItem('shadow_url', cfg.serverUrl);
+        }
+      } else {
+        document.getElementById('serverUrl').value = localStorage.getItem('shadow_url');
+      }
+
+      if (forceOverwrite || !localStorage.getItem('shadow_ctx')) {
+        if (cfg.numCtx) {
+          document.getElementById('numCtx').value = cfg.numCtx;
+          localStorage.setItem('shadow_ctx', cfg.numCtx);
+        }
+      } else {
+        document.getElementById('numCtx').value = localStorage.getItem('shadow_ctx');
+      }
+
+      if (forceOverwrite || !localStorage.getItem('shadow_sys')) {
+        if (typeof cfg.systemPrompt === 'string') {
+          document.getElementById('systemPrompt').value = cfg.systemPrompt;
+          localStorage.setItem('shadow_sys', cfg.systemPrompt);
+        }
+      } else {
+        document.getElementById('systemPrompt').value = localStorage.getItem('shadow_sys');
+      }
+
+      if (forceOverwrite) fetchModels();
+    } catch (e) {
+      if (localStorage.getItem('shadow_url')) document.getElementById('serverUrl').value = localStorage.getItem('shadow_url');
+      if (localStorage.getItem('shadow_ctx')) document.getElementById('numCtx').value = localStorage.getItem('shadow_ctx');
+      if (localStorage.getItem('shadow_sys')) document.getElementById('systemPrompt').value = localStorage.getItem('shadow_sys');
+    }
+  }
 
   function toggleSettings() {
     document.getElementById('settingsPanel').classList.toggle('open');
@@ -247,7 +284,6 @@
     chatHistory = [];
   }
 
-  // ดึงรายชื่อโมเดลทั้งหมดที่มีในเครื่องแบบเรียลไทม์
   async function fetchModels() {
     const baseUrl = document.getElementById('serverUrl').value.trim().replace(/\/$/, '');
     const select = document.getElementById('modelSelect');
@@ -309,7 +345,6 @@
     if (!model) return alert("กรุณาเลือกโมเดลก่อนครับ");
     if (!text && !file) return;
 
-    // แสดงฝั่งผู้ใช้
     const userDiv = document.createElement('div');
     userDiv.className = 'msg user';
     let base64Img = null;
@@ -326,7 +361,6 @@
     imageInput.value = '';
     updateFileBadge();
 
-    // เก็บประวัติคุยล่าสุด 6 ข้อความ (3 รอบถาม-ตอบ) เพื่อไม่ให้กิน VRAM เกิน
     const userMessage = { role: "user", content: text || "อธิบายรูปภาพนี้" };
     if (base64Img) userMessage.images = [base64Img];
     chatHistory.push(userMessage);
