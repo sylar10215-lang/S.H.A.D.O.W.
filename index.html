@@ -2,9 +2,14 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#00a8ff">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="S.H.A.D.O.W.">
   <title>S.H.A.D.O.W.</title>
+  <link rel="manifest" href="./manifest.json">
   <style>
     :root {
       --bg: #090c10;
@@ -17,16 +22,21 @@
       --border: #263142;
       --ok: #2ed573;
       --err: #ff4757;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
     * { box-sizing: border-box; }
-    body {
+    html, body {
       margin: 0;
       height: 100dvh;
-      display: flex;
-      flex-direction: column;
+      overflow: hidden;
       background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-text-size-adjust: 100%;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
     }
     header {
       background: var(--panel);
@@ -45,6 +55,7 @@
       font-weight: 800;
       color: var(--accent);
       letter-spacing: 1px;
+      font-size: 16px;
     }
     .dot {
       width: 9px;
@@ -55,20 +66,33 @@
     }
     .dot.on { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
     .bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+    /* ขนาดฟอนต์ 16px กันมือถือซูมเข้าเองเวลาโฟกัสช่องพิมพ์ */
     select, input, textarea, button {
       background: var(--input);
       color: var(--text);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 7px 10px;
-      font-size: 13px;
+      border-radius: 10px;
+      padding: 8px 11px;
+      font-size: 16px;
       outline: none;
+      touch-action: manipulation;
     }
-    select { max-width: 170px; }
+    header select, header button, .tools button {
+      font-size: 13px;
+      padding: 7px 10px;
+    }
+    select { max-width: 165px; }
     button { cursor: pointer; }
     button:hover { background: #243040; }
     .primary { background: var(--accent); color: #05111a; font-weight: 700; border: none; }
     .active-mode { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+    .install-btn {
+      background: rgba(46, 213, 115, 0.15);
+      border-color: rgba(46, 213, 115, 0.45);
+      color: var(--ok);
+      font-weight: 700;
+    }
 
     .drawer {
       display: none;
@@ -161,6 +185,7 @@
       margin-top: 6px;
       background: #0b0f15;
       font-family: monospace;
+      font-size: 13px;
     }
     .msg img {
       max-width: 260px;
@@ -170,18 +195,20 @@
       border: 1px solid rgba(255,255,255,0.14);
     }
 
-    .tools {
+    /* ดันแถบเมนูล่างสุดขึ้นมาให้มีระยะหายใจ ไม่ติดขอบจอเกินไป */
+    .bottom-dock {
       background: var(--panel);
       border-top: 1px solid var(--border);
-      padding: 6px 12px;
+      padding-bottom: calc(14px + var(--safe-bottom));
+    }
+    .tools {
+      padding: 8px 12px 4px;
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
     }
     footer {
-      background: var(--panel);
-      border-top: 1px solid var(--border);
-      padding: 10px 12px;
+      padding: 8px 12px 4px;
       display: flex;
       gap: 8px;
       align-items: center;
@@ -191,10 +218,11 @@
       overflow: hidden;
       background: var(--input);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 7px 10px;
-      font-size: 13px;
+      border-radius: 10px;
+      padding: 8px 11px;
+      font-size: 14px;
       cursor: pointer;
+      white-space: nowrap;
     }
     .upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
     #prompt { flex: 1; min-width: 0; }
@@ -208,6 +236,7 @@
     <span>S.H.A.D.O.W.</span>
   </div>
   <div class="bar">
+    <button id="installBtn" class="install-btn" type="button" style="display:none;" onclick="installApp()">⬇ ติดตั้งแอป</button>
     <button id="thinkBtn" class="active-mode" type="button" onclick="toggleThink()">🧠 คิด: เปิด</button>
     <button type="button" onclick="toggleDrawer('memoryBox')">🗂️ ความจำ (<span id="memCount">0</span>)</button>
     <select id="models"><option value="">โมเดล...</option></select>
@@ -266,20 +295,22 @@
 <div id="filesBar"></div>
 <div id="chat"></div>
 
-<div class="tools">
-  <button id="m-chat" class="active-mode" type="button" onclick="setMode('chat')">💬 วิเคราะห์/แชต</button>
-  <button id="m-file" type="button" onclick="setMode('file')">📄 สร้าง/แก้ไฟล์</button>
-  <button id="m-img" type="button" onclick="setMode('image')">🎨 เจนรูปภาพ</button>
-</div>
+<div class="bottom-dock">
+  <div class="tools">
+    <button id="m-chat" class="active-mode" type="button" onclick="setMode('chat')">💬 วิเคราะห์/แชต</button>
+    <button id="m-file" type="button" onclick="setMode('file')">📄 สร้าง/แก้ไฟล์</button>
+    <button id="m-img" type="button" onclick="setMode('image')">🎨 เจนรูปภาพ</button>
+  </div>
 
-<footer>
-  <label class="upload">
-    📎 ไฟล์
-    <input type="file" multiple accept="image/*,.txt,.md,.csv,.json,.js,.ts,.html,.css,.py,.sql,.log" onchange="addFiles(this.files)">
-  </label>
-  <input id="prompt" type="text" placeholder="พิมพ์คำสั่ง หรือ 'จำไว้นะว่า...'" onkeydown="if(event.key==='Enter') send()">
-  <button class="primary" type="button" onclick="send()">ส่ง</button>
-</footer>
+  <footer>
+    <label class="upload">
+      📎 ไฟล์
+      <input type="file" multiple accept="image/*,.txt,.md,.csv,.json,.js,.ts,.html,.css,.py,.sql,.log" onchange="addFiles(this.files)">
+    </label>
+    <input id="prompt" type="text" placeholder="พิมพ์คำสั่ง หรือ 'จำไว้นะว่า...'" onkeydown="if(event.key==='Enter') send()">
+    <button class="primary" type="button" onclick="send()">ส่ง</button>
+  </footer>
+</div>
 
 <script>
   let thinkOn = true;
@@ -287,6 +318,27 @@
   let files = [];
   let history = [];
   let memories = [];
+  let installPromptEvent = null;
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    });
+  }
+
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    installPromptEvent = e;
+    document.getElementById("installBtn").style.display = "inline-block";
+  });
+
+  async function installApp() {
+    if (!installPromptEvent) return;
+    installPromptEvent.prompt();
+    await installPromptEvent.userChoice;
+    installPromptEvent = null;
+    document.getElementById("installBtn").style.display = "none";
+  }
 
   function toggleDrawer(id) {
     const target = document.getElementById(id);
