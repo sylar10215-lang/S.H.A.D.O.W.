@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#00a8ff">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -23,7 +23,6 @@
       --ok: #2ed573;
       --warn: #ffa502;
       --err: #ff4757;
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
     * { box-sizing: border-box; }
     html, body {
@@ -72,8 +71,8 @@
       background: var(--input);
       color: var(--text);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 8px 11px;
+      border-radius: 8px;
+      padding: 7px 10px;
       font-size: 16px;
       outline: none;
       touch-action: manipulation;
@@ -195,18 +194,13 @@
       border: 1px solid rgba(255,255,255,0.14);
     }
 
-    .bottom-dock {
+    .token-bar-wrap {
       background: var(--panel);
       border-top: 1px solid var(--border);
-      padding-bottom: calc(14px + var(--safe-bottom));
-    }
-
-    /* แถบแสดงจำนวน Token ที่ใช้ไป / ทั้งหมด */
-    .token-bar-wrap {
-      padding: 7px 12px 2px;
+      padding: 6px 12px;
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 4px;
     }
     .token-meta {
       display: flex;
@@ -224,7 +218,7 @@
     }
     .token-track {
       width: 100%;
-      height: 6px;
+      height: 5px;
       background: var(--input);
       border-radius: 999px;
       overflow: hidden;
@@ -240,13 +234,17 @@
     .token-fill.danger { background: var(--err); }
 
     .tools {
-      padding: 6px 12px 4px;
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+      padding: 6px 12px;
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
     }
     footer {
-      padding: 6px 12px 4px;
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+      padding: 10px 12px;
       display: flex;
       gap: 8px;
       align-items: center;
@@ -256,8 +254,8 @@
       overflow: hidden;
       background: var(--input);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 8px 11px;
+      border-radius: 8px;
+      padding: 7px 10px;
       font-size: 14px;
       cursor: pointer;
       white-space: nowrap;
@@ -333,32 +331,30 @@
 <div id="filesBar"></div>
 <div id="chat"></div>
 
-<div class="bottom-dock">
-  <div class="token-bar-wrap">
-    <div class="token-meta">
-      <span>📊 Token / Context ในแชทนี้: <span id="tokenText" class="token-value">ใช้ไป 0 / ทั้งหมด 4,096</span></span>
-      <span id="tokenPct">0%</span>
-    </div>
-    <div class="token-track">
-      <div id="tokenFill" class="token-fill"></div>
-    </div>
+<div class="token-bar-wrap">
+  <div class="token-meta">
+    <span>📊 Token / Context ในแชทนี้: <span id="tokenText" class="token-value">ใช้ไป 0 / ทั้งหมด 4,096</span></span>
+    <span id="tokenPct">0%</span>
   </div>
-
-  <div class="tools">
-    <button id="m-chat" class="active-mode" type="button" onclick="setMode('chat')">💬 วิเคราะห์/แชต</button>
-    <button id="m-file" type="button" onclick="setMode('file')">📄 สร้าง/แก้ไฟล์</button>
-    <button id="m-img" type="button" onclick="setMode('image')">🎨 เจนรูปภาพ</button>
+  <div class="token-track">
+    <div id="tokenFill" class="token-fill"></div>
   </div>
-
-  <footer>
-    <label class="upload">
-      📎 ไฟล์
-      <input type="file" multiple accept="image/*,.txt,.md,.csv,.json,.js,.ts,.html,.css,.py,.sql,.log" onchange="addFiles(this.files)">
-    </label>
-    <input id="prompt" type="text" placeholder="พิมพ์คำสั่ง หรือ 'จำไว้นะว่า...'" oninput="updateTokenMeter()" onkeydown="if(event.key==='Enter') send()">
-    <button class="primary" type="button" onclick="send()">ส่ง</button>
-  </footer>
 </div>
+
+<div class="tools">
+  <button id="m-chat" class="active-mode" type="button" onclick="setMode('chat')">💬 วิเคราะห์/แชต</button>
+  <button id="m-file" type="button" onclick="setMode('file')">📄 สร้าง/แก้ไฟล์</button>
+  <button id="m-img" type="button" onclick="setMode('image')">🎨 เจนรูปภาพ</button>
+</div>
+
+<footer>
+  <label class="upload">
+    📎 ไฟล์
+    <input type="file" multiple accept="image/*,.txt,.md,.csv,.json,.js,.ts,.html,.css,.py,.sql,.log" onchange="addFiles(this.files)">
+  </label>
+  <input id="prompt" type="text" placeholder="พิมพ์คำสั่ง หรือ 'จำไว้นะว่า...'" oninput="updateTokenMeter()" onkeydown="if(event.key==='Enter') send()">
+  <button class="primary" type="button" onclick="send()">ส่ง</button>
+</footer>
 
 <script>
   const STORAGE_KEYS = {
