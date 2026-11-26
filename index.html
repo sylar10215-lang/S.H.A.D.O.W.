@@ -42,7 +42,8 @@
       border-bottom: 1px solid var(--border);
       gap: 8px;
       flex-wrap: wrap;
-      z-index: 20;
+      position: relative;
+      z-index: 30;
     }
     .brand {
       display: flex;
@@ -121,9 +122,9 @@
       gap: 10px;
       max-height: 55vh;
       overflow-y: auto;
-      z-index: 15;
+      position: relative;
+      z-index: 25;
     }
-    #settingsPanel.open { display: flex !important; }
     .setting-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
     @media (max-width: 760px) { .setting-grid { grid-template-columns: 1fr; } }
     .setting-row { display: flex; flex-direction: column; gap: 5px; }
@@ -319,7 +320,7 @@
       <option value="">กำลังโหลดโมเดล...</option>
     </select>
     <button type="button" onclick="fetchModels()" title="รีเฟรชโมเดล">↻</button>
-    <button id="settingsBtn" type="button" onclick="toggleSettings()" title="ตั้งค่า">⚙️</button>
+    <button id="settingsBtn" type="button" title="ตั้งค่า">⚙️</button>
     <button type="button" onclick="clearChat()" title="ล้างแชต">🗑️</button>
   </div>
 </header>
@@ -344,8 +345,8 @@
     <textarea id="systemPrompt">คุณคือ S.H.A.D.O.W. ผู้ช่วย AI ส่วนตัวของ MJ ตอบตรงไปตรงมา กระชับ ทำงานแม่นยำ เมื่อถูกขอให้สร้างหรือแก้ไขไฟล์งาน ให้ส่งโค้ด/เนื้อหาไฟล์พร้อมระบุชื่อไฟล์ให้ชัดเจน</textarea>
   </div>
   <div style="display:flex; justify-content:flex-end; gap:8px;">
-    <button type="button" onclick="toggleSettings()">ปิด</button>
-    <button class="primary" type="button" onclick="saveSettings()">บันทึกการตั้งค่า</button>
+    <button id="closeSettingsBtn" type="button">ปิด</button>
+    <button id="saveSettingsBtn" class="primary" type="button">บันทึกการตั้งค่า</button>
   </div>
 </div>
 
@@ -370,12 +371,29 @@
 </footer>
 
 <script>
-  // ฟังก์ชันเปิด-ปิดหน้าตั้งค่าแยกอิสระ
-  function toggleSettings() {
+  function setSettingsOpen(forceState) {
     const panel = document.getElementById("settingsPanel");
     if (!panel) return;
-    panel.classList.toggle("open");
+    const isCurrentlyOpen = panel.style.display === "flex";
+    const nextState = typeof forceState === "boolean" ? forceState : !isCurrentlyOpen;
+    panel.style.display = nextState ? "flex" : "none";
   }
+
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("#settingsBtn");
+    if (btn) {
+      e.preventDefault();
+      setSettingsOpen();
+    }
+    if (e.target.closest("#closeSettingsBtn")) {
+      e.preventDefault();
+      setSettingsOpen(false);
+    }
+    if (e.target.closest("#saveSettingsBtn")) {
+      e.preventDefault();
+      saveSettings();
+    }
+  });
 
   let chatHistory = [];
   let attachedFiles = [];
@@ -496,7 +514,7 @@
     localStorage.setItem("shadow_img_api", cleanImgUrl);
     localStorage.setItem("shadow_ctx", document.getElementById("numCtx").value);
     localStorage.setItem("shadow_sys", document.getElementById("systemPrompt").value);
-    toggleSettings();
+    setSettingsOpen(false);
     fetchModels();
   }
 
