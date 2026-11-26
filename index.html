@@ -2,306 +2,174 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#00a8ff">
-  <title>S.H.A.D.O.W. // AI Workspace</title>
-  <link id="manifest-link" rel="manifest" href="">
+  <title>S.H.A.D.O.W.</title>
   <style>
     :root {
-      --bg-main: #090c10;
-      --bg-panel: #11161d;
-      --bg-card: #161c26;
-      --bg-input: #1c2430;
+      --bg: #090c10;
+      --panel: #11161d;
+      --card: #161c26;
+      --input: #1c2430;
       --accent: #00a8ff;
-      --accent-soft: rgba(0, 168, 255, 0.14);
-      --accent-hover: #0088d1;
-      --text-main: #e6edf5;
-      --text-dim: #8b98ad;
+      --text: #e6edf5;
+      --dim: #8b98ad;
       --border: #263142;
-      --success: #2ed573;
-      --danger: #ff4757;
+      --ok: #2ed573;
+      --err: #ff4757;
     }
     * { box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg-main);
-      color: var(--text-main);
       margin: 0;
+      height: 100dvh;
       display: flex;
       flex-direction: column;
-      height: 100dvh;
-      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
-
     header {
-      background: var(--bg-panel);
-      padding: 10px 14px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid var(--border);
       gap: 8px;
       flex-wrap: wrap;
-      position: relative;
-      z-index: 30;
     }
     .brand {
       display: flex;
       align-items: center;
       gap: 8px;
       font-weight: 800;
-      letter-spacing: 1.4px;
       color: var(--accent);
-      font-size: 15px;
+      letter-spacing: 1px;
     }
-    .status-dot {
+    .dot {
       width: 9px;
       height: 9px;
       border-radius: 50%;
-      background: var(--danger);
+      background: var(--err);
       display: inline-block;
     }
-    .status-dot.online {
-      background: var(--success);
-      box-shadow: 0 0 8px var(--success);
-    }
-
-    .controls {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
+    .dot.on { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+    .bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     select, input, textarea, button {
-      background: var(--bg-input);
-      color: var(--text-main);
+      background: var(--input);
+      color: var(--text);
       border: 1px solid var(--border);
-      padding: 7px 10px;
       border-radius: 8px;
+      padding: 7px 10px;
       font-size: 13px;
       outline: none;
     }
-    select:focus, input:focus, textarea:focus { border-color: var(--accent); }
-    select { max-width: 180px; cursor: pointer; }
-    button {
-      cursor: pointer;
-      transition: 0.15s;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      touch-action: manipulation;
-    }
-    button:hover { background: #242f3f; }
-    button.primary {
-      background: var(--accent);
-      color: #041018;
-      font-weight: 700;
-      border: none;
-    }
-    button.primary:hover { background: var(--accent-hover); color: #fff; }
-    button.toggle-on {
-      background: var(--accent-soft);
-      border-color: var(--accent);
-      color: var(--accent);
-      font-weight: 700;
-    }
-    button.install-btn {
-      background: rgba(46, 213, 115, 0.14);
-      border-color: rgba(46, 213, 115, 0.45);
-      color: var(--success);
-      font-weight: 600;
-    }
+    select { max-width: 175px; }
+    button { cursor: pointer; }
+    button:hover { background: #243040; }
+    .primary { background: var(--accent); color: #05111a; font-weight: 700; border: none; }
+    .active-mode { border-color: var(--accent); color: var(--accent); font-weight: 700; }
 
-    #settingsPanel {
+    #settings {
       display: none;
-      background: var(--bg-panel);
-      padding: 14px;
+      background: var(--panel);
       border-bottom: 1px solid var(--border);
+      padding: 12px;
       flex-direction: column;
-      gap: 10px;
-      max-height: 55vh;
-      overflow-y: auto;
-      position: relative;
-      z-index: 25;
-    }
-    .setting-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    @media (max-width: 760px) { .setting-grid { grid-template-columns: 1fr; } }
-    .setting-row { display: flex; flex-direction: column; gap: 5px; }
-    .setting-row label { font-size: 11px; color: var(--text-dim); font-weight: 700; letter-spacing: 0.4px; }
-    textarea { resize: vertical; min-height: 64px; font-family: inherit; }
-
-    #attachmentsBar {
-      display: none;
-      background: var(--bg-panel);
-      padding: 8px 14px;
-      border-bottom: 1px solid var(--border);
       gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
     }
-    #attachmentsBar.has-items { display: flex; }
-    .chip {
-      background: var(--bg-card);
+    #settings.show { display: flex; }
+    .row { display: flex; flex-direction: column; gap: 4px; }
+    .row label { font-size: 11px; color: var(--dim); font-weight: 700; }
+    .grid2 { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; }
+    @media (max-width: 640px) { .grid2 { grid-template-columns: 1fr; } }
+    textarea { min-height: 60px; resize: vertical; font-family: inherit; }
+
+    #filesBar {
+      display: none;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 6px 12px;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    #filesBar.show { display: flex; }
+    .tag {
+      background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 5px 10px;
+      border-radius: 6px;
+      padding: 4px 8px;
       font-size: 12px;
       display: inline-flex;
       align-items: center;
       gap: 6px;
     }
-    .chip button {
-      background: transparent;
-      border: none;
-      padding: 0 2px;
-      color: var(--text-dim);
-      font-size: 14px;
-    }
-    .chip button:hover { color: var(--danger); }
 
     #chat {
       flex: 1;
       overflow-y: auto;
-      padding: 14px;
+      padding: 12px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 10px;
     }
     .msg {
-      max-width: 86%;
-      padding: 12px 14px;
+      max-width: 85%;
+      padding: 10px 13px;
       border-radius: 12px;
-      line-height: 1.55;
-      word-wrap: break-word;
+      line-height: 1.5;
       font-size: 14px;
-    }
-    .user {
-      background: #005885;
-      color: #fff;
-      align-self: flex-end;
-      border-bottom-right-radius: 3px;
       white-space: pre-wrap;
+      word-break: break-word;
     }
-    .ai {
-      background: var(--bg-panel);
-      align-self: flex-start;
-      border: 1px solid var(--border);
-      border-bottom-left-radius: 3px;
-    }
-    .ai-body { white-space: pre-wrap; }
-
-    details.think-box {
-      background: rgba(0, 168, 255, 0.06);
-      border: 1px solid rgba(0, 168, 255, 0.25);
+    .user { background: #005885; color: #fff; align-self: flex-end; }
+    .ai { background: var(--panel); border: 1px solid var(--border); align-self: flex-start; }
+    details.think {
+      background: rgba(0,168,255,0.07);
+      border: 1px solid rgba(0,168,255,0.25);
       border-radius: 8px;
-      padding: 8px 10px;
-      margin-bottom: 10px;
-      font-size: 12.5px;
-      color: var(--text-dim);
-    }
-    details.think-box summary {
-      cursor: pointer;
-      font-weight: 700;
-      color: var(--accent);
-      user-select: none;
-    }
-    details.think-box pre {
-      margin: 8px 0 0;
-      white-space: pre-wrap;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    }
-
-    .artifact-card {
-      margin-top: 10px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    .artifact-head {
-      background: var(--bg-input);
-      padding: 7px 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
+      padding: 6px 8px;
+      margin-bottom: 8px;
       font-size: 12px;
-      border-bottom: 1px solid var(--border);
+      color: var(--dim);
     }
-    .artifact-editor {
-      width: 100%;
-      min-height: 150px;
-      border: none;
-      border-radius: 0;
-      background: #0c1016;
-      color: #d8e3f0;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 12.5px;
-      padding: 10px;
-    }
-    .gen-img-wrap {
-      margin-top: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .gen-img-wrap img, .msg img {
-      max-width: 280px;
+    .file-box {
+      margin-top: 8px;
+      background: var(--card);
+      border: 1px solid var(--border);
       border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.16);
-      display: block;
+      padding: 8px;
     }
+    .file-box textarea { width: 100%; min-height: 120px; margin-top: 6px; background: #0b0f15; font-family: monospace; }
+    .msg img { max-width: 240px; border-radius: 8px; margin-top: 6px; display: block; }
 
-    .mode-strip {
-      background: var(--bg-panel);
-      padding: 6px 12px;
+    .tools {
+      background: var(--panel);
       border-top: 1px solid var(--border);
+      padding: 6px 12px;
       display: flex;
       gap: 6px;
-      overflow-x: auto;
-      align-items: center;
+      flex-wrap: wrap;
     }
-    .mode-pill {
-      font-size: 12px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      white-space: nowrap;
-    }
-    .mode-pill.active {
-      background: var(--accent);
-      color: #041018;
-      border-color: var(--accent);
-      font-weight: 700;
-    }
-
     footer {
-      background: var(--bg-panel);
+      background: var(--panel);
+      border-top: 1px solid var(--border);
       padding: 10px 12px;
       display: flex;
       gap: 8px;
-      border-top: 1px solid var(--border);
       align-items: center;
     }
-    .file-btn {
+    .upload {
       position: relative;
       overflow: hidden;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 8px 10px;
-      background: var(--bg-input);
+      background: var(--input);
       border: 1px solid var(--border);
       border-radius: 8px;
-      cursor: pointer;
+      padding: 7px 10px;
       font-size: 13px;
-      white-space: nowrap;
+      cursor: pointer;
     }
-    .file-btn input[type=file] {
-      position: absolute;
-      left: 0; top: 0; opacity: 0;
-      width: 100%; height: 100%; cursor: pointer;
-    }
+    .upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
     #prompt { flex: 1; min-width: 0; }
   </style>
 </head>
@@ -309,631 +177,307 @@
 
 <header>
   <div class="brand">
-    <span id="statusDot" class="status-dot" title="สถานะการเชื่อมต่อ"></span>
+    <span id="dot" class="dot"></span>
     <span>S.H.A.D.O.W.</span>
   </div>
-
-  <div class="controls">
-    <button id="installBtn" class="install-btn" style="display:none;" type="button" onclick="installPWA()">⬇ ติดตั้งแอป</button>
-    <button id="thinkToggleBtn" class="toggle-on" type="button" onclick="toggleThinking()" title="เปิด/ปิด โหมดใช้ความคิด">🧠 คิด: เปิด</button>
-    <select id="modelSelect" title="เลือกโมเดล">
-      <option value="">กำลังโหลดโมเดล...</option>
-    </select>
-    <button type="button" onclick="fetchModels()" title="รีเฟรชโมเดล">↻</button>
-    <button id="settingsBtn" type="button" title="ตั้งค่า">⚙️</button>
-    <button type="button" onclick="clearChat()" title="ล้างแชต">🗑️</button>
+  <div class="bar">
+    <button id="thinkBtn" class="active-mode" type="button" onclick="toggleThink()">🧠 คิด: เปิด</button>
+    <select id="models"><option value="">โมเดล...</option></select>
+    <button type="button" onclick="loadModels()">↻</button>
+    <button type="button" onclick="toggleSettings()">⚙️</button>
+    <button type="button" onclick="clearChat()">🗑️</button>
   </div>
 </header>
 
-<div id="settingsPanel">
-  <div class="setting-grid">
-    <div class="setting-row">
-      <label>OLLAMA / CHAT URL (https://...)</label>
-      <input type="text" id="serverUrl" placeholder="https://xxxx.trycloudflare.com">
+<div id="settings">
+  <div class="grid2">
+    <div class="row">
+      <label>OLLAMA URL (https://...)</label>
+      <input id="urlInput" type="text" placeholder="https://xxxx.trycloudflare.com">
     </div>
-    <div class="setting-row">
-      <label>IMAGE GEN ENDPOINT (ถ้ามี API/โมเดลสร้างรูป)</label>
-      <input type="text" id="imageApiUrl" placeholder="เว้นว่าง = สร้างภาพกราฟิก/ไดอะแกรมผ่าน Canvas">
-    </div>
-    <div class="setting-row">
+    <div class="row">
       <label>NUM_CTX</label>
-      <input type="number" id="numCtx" value="4096">
+      <input id="ctxInput" type="number" value="4096">
     </div>
   </div>
-  <div class="setting-row">
+  <div class="row">
     <label>SYSTEM PROMPT</label>
-    <textarea id="systemPrompt">คุณคือ S.H.A.D.O.W. ผู้ช่วย AI ส่วนตัวของ MJ ตอบตรงไปตรงมา กระชับ ทำงานแม่นยำ เมื่อถูกขอให้สร้างหรือแก้ไขไฟล์งาน ให้ส่งโค้ด/เนื้อหาไฟล์พร้อมระบุชื่อไฟล์ให้ชัดเจน</textarea>
+    <textarea id="sysInput">คุณคือ S.H.A.D.O.W. ผู้ช่วยของ MJ ตอบตรงไปตรงมา กระชับ หากสร้าง/แก้ไขไฟล์ให้ใส่ชื่อไฟล์ในหัวโค้ดบล็อก เช่น ```js:app.js```</textarea>
   </div>
   <div style="display:flex; justify-content:flex-end; gap:8px;">
-    <button id="closeSettingsBtn" type="button">ปิด</button>
-    <button id="saveSettingsBtn" class="primary" type="button">บันทึกการตั้งค่า</button>
+    <button type="button" onclick="toggleSettings()">ปิด</button>
+    <button class="primary" type="button" onclick="saveCfg()">บันทึก</button>
   </div>
 </div>
 
-<div id="attachmentsBar"></div>
-
+<div id="filesBar"></div>
 <div id="chat"></div>
 
-<div class="mode-strip">
-  <span style="font-size:11px; color:var(--text-dim);">โหมดงาน:</span>
-  <button class="mode-pill active" type="button" data-mode="chat" onclick="setWorkMode('chat')">💬 แชต / วิเคราะห์</button>
-  <button class="mode-pill" type="button" data-mode="file" onclick="setWorkMode('file')">📄 สร้าง / แก้ไขไฟล์</button>
-  <button class="mode-pill" type="button" data-mode="image" onclick="setWorkMode('image')">🎨 เจนรูปภาพ</button>
+<div class="tools">
+  <button id="m-chat" class="active-mode" type="button" onclick="setMode('chat')">💬 วิเคราะห์/แชต</button>
+  <button id="m-file" type="button" onclick="setMode('file')">📄 สร้าง/แก้ไฟล์</button>
+  <button id="m-img" type="button" onclick="setMode('image')">🎨 เจนรูปภาพ</button>
 </div>
 
 <footer>
-  <label class="file-btn" title="แนบไฟล์งาน (โค้ด, txt, csv, json, md, รูปภาพ ฯลฯ)">
+  <label class="upload">
     📎 ไฟล์
-    <input type="file" id="docInput" multiple accept="image/*,.txt,.md,.csv,.json,.js,.ts,.html,.css,.py,.java,.cpp,.c,.sql,.xml,.yaml,.yml,.log" onchange="handleFiles(this.files)">
+    <input type="file" multiple accept="image/*,.txt,.md,.csv,.json,.js,.ts,.html,.css,.py,.sql,.log" onchange="addFiles(this.files)">
   </label>
-  <input type="text" id="prompt" placeholder="พิมพ์คำสั่งให้ S.H.A.D.O.W. ..." onkeypress="if(event.key==='Enter') send()">
+  <input id="prompt" type="text" placeholder="พิมพ์คำสั่ง..." onkeydown="if(event.key==='Enter') send()">
   <button class="primary" type="button" onclick="send()">ส่ง</button>
 </footer>
 
 <script>
-  function setSettingsOpen(forceState) {
-    const panel = document.getElementById("settingsPanel");
-    if (!panel) return;
-    const isCurrentlyOpen = panel.style.display === "flex";
-    const nextState = typeof forceState === "boolean" ? forceState : !isCurrentlyOpen;
-    panel.style.display = nextState ? "flex" : "none";
+  let thinkOn = true;
+  let mode = "chat";
+  let files = [];
+  let history = [];
+
+  function toggleSettings() {
+    document.getElementById("settings").classList.toggle("show");
   }
 
-  document.addEventListener("click", (e) => {
-    const btn = e.target.closest("#settingsBtn");
-    if (btn) {
-      e.preventDefault();
-      setSettingsOpen();
-    }
-    if (e.target.closest("#closeSettingsBtn")) {
-      e.preventDefault();
-      setSettingsOpen(false);
-    }
-    if (e.target.closest("#saveSettingsBtn")) {
-      e.preventDefault();
-      saveSettings();
-    }
-  });
-
-  let chatHistory = [];
-  let attachedFiles = [];
-  let thinkEnabled = true;
-  let workMode = "chat";
-  let deferredPrompt = null;
-
-  (function setupPWA() {
-    try {
-      const manifest = {
-        name: "S.H.A.D.O.W. AI Workspace",
-        short_name: "S.H.A.D.O.W.",
-        start_url: ".",
-        display: "standalone",
-        background_color: "#090c10",
-        theme_color: "#00a8ff",
-        icons: [
-          {
-            src: "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><rect width="128" height="128" rx="26" fill="#0d131c"/><circle cx="64" cy="64" r="34" fill="none" stroke="#00a8ff" stroke-width="8"/><circle cx="64" cy="64" r="12" fill="#00a8ff"/></svg>'),
-            sizes: "128x128",
-            type: "image/svg+xml"
-          }
-        ]
-      };
-      const blob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
-      document.getElementById("manifest-link").href = URL.createObjectURL(blob);
-
-      if ("serviceWorker" in navigator) {
-        const swCode = `
-          self.addEventListener("install", e => self.skipWaiting());
-          self.addEventListener("activate", e => e.waitUntil(self.clients.claim()));
-          self.addEventListener("fetch", e => {});
-        `;
-        const swBlob = new Blob([swCode], { type: "application/javascript" });
-        navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
-      }
-    } catch (e) {}
-  })();
-
-  window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    document.getElementById("installBtn").style.display = "inline-flex";
-  });
-
-  async function installPWA() {
-    if (!deferredPrompt) {
-      alert("หากไม่เด้งหน้าต่างติดตั้งอัตโนมัติ ให้กดเมนูเบราว์เซอร์ (⋮ หรือ Share) แล้วเลือก 'Add to Home Screen' หรือ 'Install App'");
-      return;
-    }
-    deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
-    deferredPrompt = null;
-    document.getElementById("installBtn").style.display = "none";
+  function toggleThink() {
+    thinkOn = !thinkOn;
+    const b = document.getElementById("thinkBtn");
+    b.textContent = thinkOn ? "🧠 คิด: เปิด" : "⚡ คิด: ปิด";
+    b.classList.toggle("active-mode", thinkOn);
   }
 
-  window.addEventListener("DOMContentLoaded", () => {
-    try {
-      const params = new URLSearchParams(window.location.search);
-      const qUrl = params.get("url");
-      if (qUrl) {
-        localStorage.setItem("shadow_url", qUrl.trim());
-      }
-      if (localStorage.getItem("shadow_url")) {
-        document.getElementById("serverUrl").value = localStorage.getItem("shadow_url");
-      }
-      if (localStorage.getItem("shadow_img_api")) {
-        document.getElementById("imageApiUrl").value = localStorage.getItem("shadow_img_api");
-      }
-      if (localStorage.getItem("shadow_ctx")) {
-        document.getElementById("numCtx").value = localStorage.getItem("shadow_ctx");
-      }
-      if (localStorage.getItem("shadow_sys")) {
-        document.getElementById("systemPrompt").value = localStorage.getItem("shadow_sys");
-      }
-      if (localStorage.getItem("shadow_think") !== null) {
-        thinkEnabled = localStorage.getItem("shadow_think") === "true";
-        renderThinkButton();
-      }
-      fetchModels();
-    } catch (e) {}
-  });
-
-  function toggleThinking() {
-    thinkEnabled = !thinkEnabled;
-    localStorage.setItem("shadow_think", String(thinkEnabled));
-    renderThinkButton();
-  }
-
-  function renderThinkButton() {
-    const btn = document.getElementById("thinkToggleBtn");
-    btn.textContent = thinkEnabled ? "🧠 คิด: เปิด" : "⚡ คิด: ปิด";
-    btn.classList.toggle("toggle-on", thinkEnabled);
-  }
-
-  function setWorkMode(mode) {
-    workMode = mode;
-    document.querySelectorAll(".mode-pill").forEach(el => {
-      el.classList.toggle("active", el.dataset.mode === mode);
-    });
-    const promptEl = document.getElementById("prompt");
-    if (mode === "file") {
-      promptEl.placeholder = "สั่งสร้างไฟล์ใหม่ หรือสั่งแก้ไขไฟล์ที่แนบไว้ เช่น 'แก้โค้ดให้รองรับ dark mode แล้วตั้งชื่อ app.js'...";
-    } else if (mode === "image") {
-      promptEl.placeholder = "อธิบายรูปภาพที่ต้องการให้เจน เช่น 'ภาพโลโก้ไซเบอร์พังก์สีฟ้าเข้มบนพื้นหลังมืด'...";
-    } else {
-      promptEl.placeholder = "พิมพ์คำสั่งหรือให้ช่วยวิเคราะห์ไฟล์ที่แนบมา...";
-    }
-  }
-
-  function saveSettings() {
-    const cleanUrl = document.getElementById("serverUrl").value.trim().replace(/\/$/, "");
-    const cleanImgUrl = document.getElementById("imageApiUrl").value.trim().replace(/\/$/, "");
-    document.getElementById("serverUrl").value = cleanUrl;
-    document.getElementById("imageApiUrl").value = cleanImgUrl;
-
-    localStorage.setItem("shadow_url", cleanUrl);
-    localStorage.setItem("shadow_img_api", cleanImgUrl);
-    localStorage.setItem("shadow_ctx", document.getElementById("numCtx").value);
-    localStorage.setItem("shadow_sys", document.getElementById("systemPrompt").value);
-    setSettingsOpen(false);
-    fetchModels();
-  }
-
-  async function handleFiles(fileList) {
-    for (const file of Array.from(fileList)) {
-      const isImage = file.type.startsWith("image/");
-      if (isImage) {
-        const base64 = await readAsBase64(file);
-        attachedFiles.push({
-          name: file.name,
-          type: file.type,
-          isImage: true,
-          base64,
-          previewUrl: URL.createObjectURL(file)
-        });
-      } else {
-        const textContent = await readAsText(file);
-        attachedFiles.push({
-          name: file.name,
-          type: file.type || "text/plain",
-          isImage: false,
-          textContent: textContent.slice(0, 60000)
-        });
-      }
-    }
-    document.getElementById("docInput").value = "";
-    renderAttachments();
-  }
-
-  function removeAttachment(idx) {
-    attachedFiles.splice(idx, 1);
-    renderAttachments();
-  }
-
-  function renderAttachments() {
-    const bar = document.getElementById("attachmentsBar");
-    bar.innerHTML = "";
-    if (attachedFiles.length === 0) {
-      bar.classList.remove("has-items");
-      return;
-    }
-    bar.classList.add("has-items");
-    attachedFiles.forEach((f, idx) => {
-      const chip = document.createElement("div");
-      chip.className = "chip";
-      chip.innerHTML = `<span>${f.isImage ? "🖼️" : "📄"} ${escapeHtml(f.name)}</span><button type="button" onclick="removeAttachment(${idx})" title="ลบไฟล์">×</button>`;
-      bar.appendChild(chip);
+  function setMode(m) {
+    mode = m;
+    ["chat", "file", "image"].forEach(x => {
+      document.getElementById("m-" + x).classList.toggle("active-mode", x === m);
     });
   }
 
-  function readAsBase64(file) {
-    return new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(r.result.split(",")[1]);
-      r.onerror = reject;
-      r.readAsDataURL(file);
-    });
-  }
-
-  function readAsText(file) {
-    return new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(r.result);
-      r.onerror = reject;
-      r.readAsText(file);
-    });
+  function saveCfg() {
+    const url = document.getElementById("urlInput").value.trim().replace(/\/$/, "");
+    document.getElementById("urlInput").value = url;
+    localStorage.setItem("shadow_url", url);
+    localStorage.setItem("shadow_ctx", document.getElementById("ctxInput").value);
+    localStorage.setItem("shadow_sys", document.getElementById("sysInput").value);
+    toggleSettings();
+    loadModels();
   }
 
   function clearChat() {
     document.getElementById("chat").innerHTML = "";
-    chatHistory = [];
+    history = [];
   }
 
-  async function fetchModels() {
-    const baseUrl = document.getElementById("serverUrl").value.trim().replace(/\/$/, "");
-    const select = document.getElementById("modelSelect");
-    const dot = document.getElementById("statusDot");
-    const savedModel = localStorage.getItem("shadow_model");
-
-    if (!baseUrl) {
-      select.innerHTML = '<option value="">ตั้งค่า URL ใน ⚙️</option>';
-      dot.classList.remove("online");
-      return;
-    }
-
-    try {
-      const res = await fetch(`${baseUrl}/api/tags`);
-      const data = await res.json();
-      select.innerHTML = "";
-      if (data.models && data.models.length > 0) {
-        data.models.forEach(m => {
-          const opt = document.createElement("option");
-          opt.value = m.name;
-          const gb = (m.size / (1024 ** 3)).toFixed(1);
-          opt.textContent = `${m.name} (${gb} GB)`;
-          select.appendChild(opt);
+  async function addFiles(list) {
+    for (const f of Array.from(list)) {
+      if (f.type.startsWith("image/")) {
+        const b64 = await new Promise((res, rej) => {
+          const r = new FileReader();
+          r.onload = () => res(r.result.split(",")[1]);
+          r.onerror = rej;
+          r.readAsDataURL(f);
         });
-        if (savedModel && [...select.options].some(o => o.value === savedModel)) {
-          select.value = savedModel;
-        }
-        dot.classList.add("online");
+        files.push({ name: f.name, isImg: true, b64, url: URL.createObjectURL(f) });
       } else {
-        select.innerHTML = '<option value="">ไม่พบโมเดล</option>';
-        dot.classList.remove("online");
+        const txt = await f.text();
+        files.push({ name: f.name, isImg: false, text: txt.slice(0, 50000) });
       }
-    } catch (e) {
-      select.innerHTML = '<option value="">เชื่อมต่อไม่ได้</option>';
-      dot.classList.remove("online");
+    }
+    renderFiles();
+  }
+
+  function renderFiles() {
+    const bar = document.getElementById("filesBar");
+    bar.innerHTML = "";
+    bar.classList.toggle("show", files.length > 0);
+    files.forEach((f, i) => {
+      const span = document.createElement("span");
+      span.className = "tag";
+      span.textContent = (f.isImg ? "🖼️ " : "📄 ") + f.name + " ";
+      const del = document.createElement("button");
+      del.type = "button";
+      del.textContent = "×";
+      del.onclick = () => { files.splice(i, 1); renderFiles(); };
+      span.appendChild(del);
+      bar.appendChild(span);
+    });
+  }
+
+  async function loadModels() {
+    const url = document.getElementById("urlInput").value.trim().replace(/\/$/, "");
+    const sel = document.getElementById("models");
+    const dot = document.getElementById("dot");
+    if (!url) { dot.classList.remove("on"); return; }
+    try {
+      const r = await fetch(url + "/api/tags");
+      const d = await r.json();
+      sel.innerHTML = "";
+      (d.models || []).forEach(m => {
+        const o = document.createElement("option");
+        o.value = m.name;
+        o.textContent = m.name;
+        sel.appendChild(o);
+      });
+      dot.classList.toggle("on", (d.models || []).length > 0);
+    } catch {
+      dot.classList.remove("on");
     }
   }
 
-  document.getElementById("modelSelect").addEventListener("change", (e) => {
-    localStorage.setItem("shadow_model", e.target.value);
-  });
-
-  function parseThinkAndContent(raw) {
-    let thinkPart = "";
-    let cleanPart = raw || "";
-
-    const thinkMatch = cleanPart.match(/<think>([\s\S]*?)<\/think>/i);
-    if (thinkMatch) {
-      thinkPart = thinkMatch[1].trim();
-      cleanPart = cleanPart.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
-    }
-
-    if (!thinkEnabled) {
-      thinkPart = "";
-      cleanPart = cleanPart.replace(/<think>[\s\S]*$/gi, "").trim();
-    }
-
-    return { thinkPart, cleanPart };
+  function makeCanvasImage(text) {
+    const c = document.createElement("canvas");
+    c.width = 720; c.height = 420;
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#0b1320";
+    ctx.fillRect(0, 0, 720, 420);
+    ctx.strokeStyle = "#00a8ff";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(20, 20, 680, 380);
+    ctx.fillStyle = "#00a8ff";
+    ctx.font = "bold 22px sans-serif";
+    ctx.fillText("S.H.A.D.O.W. IMAGE", 44, 65);
+    ctx.fillStyle = "#e6edf5";
+    ctx.font = "18px sans-serif";
+    ctx.fillText((text || "S.H.A.D.O.W.").slice(0, 60), 44, 120);
+    return c.toDataURL("image/png");
   }
 
-  function extractFileBlocks(text) {
-    const blocks = [];
-    const regex = /```([a-zA-Z0-9_-]*)(?::([^\n]+))?\n([\s\S]*?)```/g;
-    let match;
-    let index = 1;
-    while ((match = regex.exec(text)) !== null) {
-      const lang = (match[1] || "txt").toLowerCase();
-      const explicitName = match[2] ? match[2].trim() : "";
-      const extMap = {
-        javascript: "js", js: "js", typescript: "ts", ts: "ts",
-        html: "html", css: "css", python: "py", py: "py",
-        json: "json", markdown: "md", md: "md", csv: "csv",
-        sql: "sql", sh: "sh", bash: "sh", xml: "xml", yaml: "yml"
-      };
-      const ext = extMap[lang] || lang || "txt";
-      const fileName = explicitName || `shadow-output-${index}.${ext}`;
-      blocks.push({ fileName, content: match[3] });
-      index++;
-    }
-    return blocks;
-  }
-
-  function downloadTextFile(filename, content) {
-    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+  function downloadFile(name, content) {
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
+    a.href = URL.createObjectURL(new Blob([content], { type: "text/plain;charset=utf-8" }));
+    a.download = name || "output.txt";
     a.click();
   }
 
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, "&")
-      .replace(/</g, "<")
-      .replace(/>/g, ">")
-      .replace(/"/g, """);
-  }
-
-  async function generateImageForUser(promptText, aiDiv) {
-    const imgApi = document.getElementById("imageApiUrl").value.trim().replace(/\/$/, "");
-    const chatBox = document.getElementById("chat");
-
-    if (imgApi) {
-      try {
-        const res = await fetch(`${imgApi}/api/generate`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: promptText, stream: false })
-        });
-        const data = await res.json();
-        const b64 = data.image || (data.images && data.images[0]);
-        if (b64) {
-          const src = b64.startsWith("data:") ? b64 : `data:image/png;base64,${b64}`;
-          renderGeneratedImage(aiDiv, src, "generated-image.png", promptText);
-          return;
-        }
-      } catch (e) {}
-    }
-
-    const canvas = document.createElement("canvas");
-    canvas.width = 768;
-    canvas.height = 512;
-    const ctx = canvas.getContext("2d");
-
-    const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    grad.addColorStop(0, "#09111e");
-    grad.addColorStop(0.5, "#0f2942");
-    grad.addColorStop(1, "#071324");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.strokeStyle = "rgba(0, 168, 255, 0.22)";
-    ctx.lineWidth = 1;
-    for (let x = 0; x < canvas.width; x += 32) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
-    }
-    for (let y = 0; y < canvas.height; y += 32) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-    }
-
-    ctx.strokeStyle = "#00a8ff";
-    ctx.lineWidth = 3;
-    ctx.strokeRect(28, 28, canvas.width - 56, canvas.height - 56);
-
-    ctx.fillStyle = "#00a8ff";
-    ctx.font = "bold 26px sans-serif";
-    ctx.fillText("S.H.A.D.O.W. // VISUAL RENDER", 56, 82);
-
-    ctx.fillStyle = "#e6edf5";
-    ctx.font = "600 22px sans-serif";
-    wrapCanvasText(ctx, promptText, 56, 140, canvas.width - 112, 34);
-
-    const dataUrl = canvas.toDataURL("image/png");
-    renderGeneratedImage(aiDiv, dataUrl, "shadow-visual.png", promptText);
-    chatBox.scrollTop = chatBox.scrollHeight;
-  }
-
-  function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight) {
-    const words = text.split(" ");
-    let line = "";
-    for (let n = 0; n < words.length; n++) {
-      const testLine = line + words[n] + " ";
-      if (ctx.measureText(testLine).width > maxWidth && n > 0) {
-        ctx.fillText(line.trim(), x, y);
-        line = words[n] + " ";
-        y += lineHeight;
-      } else {
-        line = testLine;
-      }
-    }
-    ctx.fillText(line.trim(), x, y);
-  }
-
-  function renderGeneratedImage(aiDiv, src, filename, caption) {
-    aiDiv.innerHTML = `<div class="ai-body">สร้างภาพเสร็จแล้ว: ${escapeHtml(caption)}</div>`;
-    const wrap = document.createElement("div");
-    wrap.className = "gen-img-wrap";
-
-    const img = document.createElement("img");
-    img.src = src;
-    wrap.appendChild(img);
-
-    const dlBtn = document.createElement("button");
-    dlBtn.className = "primary";
-    dlBtn.type = "button";
-    dlBtn.style.alignSelf = "flex-start";
-    dlBtn.textContent = "⬇ ดาวน์โหลดรูปภาพ";
-    dlBtn.onclick = () => {
-      const a = document.createElement("a");
-      a.href = src;
-      a.download = filename;
-      a.click();
-    };
-    wrap.appendChild(dlBtn);
-    aiDiv.appendChild(wrap);
-  }
-
   async function send() {
-    const promptInput = document.getElementById("prompt");
-    const model = document.getElementById("modelSelect").value;
-    const baseUrl = document.getElementById("serverUrl").value.trim().replace(/\/$/, "");
-    const numCtx = parseInt(document.getElementById("numCtx").value, 10) || 4096;
-    let sysPrompt = document.getElementById("systemPrompt").value.trim();
-    const chatBox = document.getElementById("chat");
+    const inp = document.getElementById("prompt");
+    const text = inp.value.trim();
+    const batch = [...files];
+    if (!text && batch.length === 0) return;
 
-    const text = promptInput.value.trim();
-    const filesSnapshot = [...attachedFiles];
+    const chat = document.getElementById("chat");
+    const uDiv = document.createElement("div");
+    uDiv.className = "msg user";
+    uDiv.textContent = (text || "วิเคราะห์ไฟล์") + (batch.length ? "\n[" + batch.map(x => x.name).join(", ") + "]" : "");
+    chat.appendChild(uDiv);
 
-    if (!text && filesSnapshot.length === 0) return;
+    inp.value = "";
+    files = [];
+    renderFiles();
 
-    const userDiv = document.createElement("div");
-    userDiv.className = "msg user";
-    filesSnapshot.forEach(f => {
-      if (f.isImage && f.previewUrl) {
-        const img = document.createElement("img");
-        img.src = f.previewUrl;
-        userDiv.appendChild(img);
-      }
-    });
-    const fileNote = filesSnapshot.length > 0
-      ? `\n[แนบไฟล์: ${filesSnapshot.map(f => f.name).join(", ")}]`
-      : "";
-    userDiv.appendChild(document.createTextNode((text || "ช่วยวิเคราะห์ไฟล์นี้") + fileNote));
-    chatBox.appendChild(userDiv);
+    const aDiv = document.createElement("div");
+    aDiv.className = "msg ai";
+    aDiv.textContent = "กำลังประมวลผล...";
+    chat.appendChild(aDiv);
+    chat.scrollTop = chat.scrollHeight;
 
-    promptInput.value = "";
-    attachedFiles = [];
-    renderAttachments();
-    chatBox.scrollTop = chatBox.scrollHeight;
-
-    const aiDiv = document.createElement("div");
-    aiDiv.className = "msg ai";
-    aiDiv.innerHTML = `<div class="ai-body">S.H.A.D.O.W. กำลังทำงาน...</div>`;
-    chatBox.appendChild(aiDiv);
-    chatBox.scrollTop = chatBox.scrollHeight;
-
-    if (workMode === "image") {
-      await generateImageForUser(text || "S.H.A.D.O.W. AI Concept", aiDiv);
+    if (mode === "image") {
+      const dataUrl = makeCanvasImage(text);
+      aDiv.innerHTML = "";
+      const img = document.createElement("img");
+      img.src = dataUrl;
+      const btn = document.createElement("button");
+      btn.className = "primary";
+      btn.type = "button";
+      btn.style.marginTop = "8px";
+      btn.textContent = "⬇ ดาวน์โหลดรูป";
+      btn.onclick = () => {
+        const a = document.createElement("a");
+        a.href = dataUrl;
+        a.download = "shadow-image.png";
+        a.click();
+      };
+      aDiv.appendChild(img);
+      aDiv.appendChild(btn);
       return;
     }
 
-    if (!model) {
-      aiDiv.innerHTML = `<div class="ai-body">กรุณาเลือกโมเดลก่อนครับ (หรือตั้งค่า URL ใน ⚙️)</div>`;
+    const url = document.getElementById("urlInput").value.trim().replace(/\/$/, "");
+    const model = document.getElementById("models").value;
+    if (!url || !model) {
+      aDiv.textContent = "ตั้งค่า URL ใน ⚙️ และเลือกโมเดลก่อนครับ";
       return;
     }
 
-    const docContext = filesSnapshot
-      .filter(f => !f.isImage)
-      .map(f => `\n--- ไฟล์: ${f.name} ---\n${f.textContent}\n--- จบไฟล์ ${f.name} ---`)
-      .join("\n");
+    const docText = batch.filter(x => !x.isImg).map(x => `\n[${x.name}]\n${x.text}`).join("");
+    const imgs = batch.filter(x => x.isImg).map(x => x.b64);
+    let promptOut = (text || "วิเคราะห์ไฟล์นี้") + docText;
+    if (!thinkOn) promptOut = "/no_think " + promptOut;
 
-    const imageList = filesSnapshot.filter(f => f.isImage).map(f => f.base64);
+    const msg = { role: "user", content: promptOut };
+    if (imgs.length) msg.images = imgs;
+    history.push(msg);
 
-    let effectivePrompt = text || "ช่วยวิเคราะห์ไฟล์ที่แนบมาให้ละเอียด";
-    if (docContext) {
-      effectivePrompt += `\n\nข้อมูลจากไฟล์ที่แนบมา:${docContext}`;
-    }
-    if (workMode === "file") {
-      effectivePrompt += `\n\n[คำสั่งพิเศษ: ให้สร้างหรือแก้ไขไฟล์ตามคำขอ โดยใส่เนื้อหาไฟล์ไว้ในโค้ดบล็อก \`\`\`นามสกุล:ชื่อไฟล์.นามสกุล ... \`\`\` เพื่อให้ผู้ใช้แก้ไขและดาวน์โหลดไฟล์ได้ทันที]`;
-    }
-    if (!thinkEnabled) {
-      effectivePrompt = `/no_think ${effectivePrompt}`;
-      sysPrompt = `${sysPrompt} ห้ามแสดงขั้นตอนความคิด ให้ตอบผลลัพธ์สุดท้ายทันที`;
-    } else {
-      sysPrompt = `${sysPrompt} หากต้องใช้ความคิดวิเคราะห์ ให้ใส่ส่วนวิเคราะห์ไว้ใน <think>...</think> แล้วตามด้วยคำตอบ`;
-    }
-
-    const msgObj = { role: "user", content: effectivePrompt };
-    if (imageList.length > 0) msgObj.images = imageList;
-    chatHistory.push(msgObj);
-    if (chatHistory.length > 8) chatHistory = chatHistory.slice(-8);
-
-    const payloadMessages = sysPrompt
-      ? [{ role: "system", content: sysPrompt }, ...chatHistory]
-      : chatHistory;
+    const sys = document.getElementById("sysInput").value.trim();
+    const messages = sys ? [{ role: "system", content: sys }, ...history] : history;
 
     try {
-      const res = await fetch(`${baseUrl}/api/chat`, {
+      const r = await fetch(url + "/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model,
           stream: false,
-          options: { num_ctx: numCtx },
-          messages: payloadMessages
+          options: { num_ctx: parseInt(document.getElementById("ctxInput").value, 10) || 4096 },
+          messages
         })
       });
-      const data = await res.json();
-      const fullReply = (data.message && data.message.content) || "";
-      const { thinkPart, cleanPart } = parseThinkAndContent(fullReply);
+      const d = await r.json();
+      const raw = (d.message && d.message.content) || "";
+      history.push({ role: "assistant", content: raw });
 
-      aiDiv.innerHTML = "";
-      if (thinkEnabled && thinkPart) {
-        const det = document.createElement("details");
-        det.className = "think-box";
-        det.innerHTML = `<summary>🧠 กระบวนการคิดของ S.H.A.D.O.W.</summary><pre>${escapeHtml(thinkPart)}</pre>`;
-        aiDiv.appendChild(det);
+      aDiv.innerHTML = "";
+      let bodyText = raw;
+      const tm = raw.match(/<think>([\s\S]*?)<\/think>/i);
+      if (tm) {
+        bodyText = raw.replace(/<think>[\s\S]*?<\/think>/i, "").trim();
+        if (thinkOn) {
+          const det = document.createElement("details");
+          det.className = "think";
+          det.innerHTML = `<summary>🧠 ความคิด</summary><div>${tm[1].trim().replace(/</g, "<")}</div>`;
+          aDiv.appendChild(det);
+        }
       }
 
-      const bodyDiv = document.createElement("div");
-      bodyDiv.className = "ai-body";
-      bodyDiv.textContent = cleanPart || fullReply;
-      aiDiv.appendChild(bodyDiv);
+      const p = document.createElement("div");
+      p.textContent = bodyText;
+      aDiv.appendChild(p);
 
-      const fileBlocks = extractFileBlocks(cleanPart || fullReply);
-      fileBlocks.forEach(fb => {
-        const card = document.createElement("div");
-        card.className = "artifact-card";
-
-        const head = document.createElement("div");
-        head.className = "artifact-head";
-
-        const nameInput = document.createElement("input");
-        nameInput.type = "text";
-        nameInput.value = fb.fileName;
-        nameInput.style.padding = "4px 8px";
-        nameInput.style.fontSize = "12px";
-        nameInput.style.maxWidth = "220px";
-
-        const dlBtn = document.createElement("button");
-        dlBtn.className = "primary";
-        dlBtn.type = "button";
-        dlBtn.style.padding = "5px 10px";
-        dlBtn.style.fontSize = "12px";
-        dlBtn.textContent = "⬇ ดาวน์โหลดไฟล์";
-
-        const editor = document.createElement("textarea");
-        editor.className = "artifact-editor";
-        editor.value = fb.content;
-
-        dlBtn.onclick = () => downloadTextFile(nameInput.value.trim() || "file.txt", editor.value);
-
-        head.appendChild(nameInput);
-        head.appendChild(dlBtn);
-        card.appendChild(head);
-        card.appendChild(editor);
-        aiDiv.appendChild(card);
-      });
-
-      chatHistory.push({ role: "assistant", content: fullReply });
-    } catch (err) {
-      aiDiv.innerHTML = `<div class="ai-body">Error: เชื่อมต่อไม่ได้ (เช็ก URL ของ Ollama หรือสถานะ Tunnel)</div>`;
+      const re = /```([a-zA-Z0-9_-]*)(?::([^\n]+))?\n([\s\S]*?)```/g;
+      let m, n = 1;
+      while ((m = re.exec(bodyText)) !== null) {
+        const fname = (m[2] && m[2].trim()) || `file-${n}.${m[1] || "txt"}`;
+        const box = document.createElement("div");
+        box.className = "file-box";
+        const nameIn = document.createElement("input");
+        nameIn.value = fname;
+        const dl = document.createElement("button");
+        dl.className = "primary";
+        dl.type = "button";
+        dl.style.marginLeft = "6px";
+        dl.textContent = "⬇ โหลด";
+        const ed = document.createElement("textarea");
+        ed.value = m[3];
+        dl.onclick = () => downloadFile(nameIn.value.trim(), ed.value);
+        box.appendChild(nameIn);
+        box.appendChild(dl);
+        box.appendChild(ed);
+        aDiv.appendChild(box);
+        n++;
+      }
+    } catch {
+      aDiv.textContent = "เชื่อมต่อไม่ได้";
     }
-    chatBox.scrollTop = chatBox.scrollHeight;
+    chat.scrollTop = chat.scrollHeight;
   }
-</script>
 
+  window.onload = () => {
+    const q = new URLSearchParams(location.search).get("url");
+    if (q) localStorage.setItem("shadow_url", q.trim());
+    if (localStorage.getItem("shadow_url")) document.getElementById("urlInput").value = localStorage.getItem("shadow_url");
+    if (localStorage.getItem("shadow_ctx")) document.getElementById("ctxInput").value = localStorage.getItem("shadow_ctx");
+    if (localStorage.getItem("shadow_sys")) document.getElementById("sysInput").value = localStorage.getItem("shadow_sys");
+    loadModels();
+  };
+</script>
 </body>
 </html>
