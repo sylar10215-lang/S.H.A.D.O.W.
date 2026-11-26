@@ -64,13 +64,13 @@
       font-size: 13px;
       outline: none;
     }
-    select { max-width: 175px; }
+    select { max-width: 170px; }
     button { cursor: pointer; }
     button:hover { background: #243040; }
     .primary { background: var(--accent); color: #05111a; font-weight: 700; border: none; }
     .active-mode { border-color: var(--accent); color: var(--accent); font-weight: 700; }
 
-    #settings {
+    .drawer {
       display: none;
       background: var(--panel);
       border-bottom: 1px solid var(--border);
@@ -80,12 +80,25 @@
       max-height: 55vh;
       overflow-y: auto;
     }
-    #settings.show { display: flex; }
+    .drawer.show { display: flex; }
     .row { display: flex; flex-direction: column; gap: 4px; }
     .row label { font-size: 11px; color: var(--dim); font-weight: 700; }
     .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     @media (max-width: 720px) { .grid3 { grid-template-columns: 1fr; } }
     textarea { min-height: 60px; resize: vertical; font-family: inherit; }
+
+    .mem-list { display: flex; flex-direction: column; gap: 6px; }
+    .mem-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
 
     #filesBar {
       display: none;
@@ -196,14 +209,36 @@
   </div>
   <div class="bar">
     <button id="thinkBtn" class="active-mode" type="button" onclick="toggleThink()">🧠 คิด: เปิด</button>
+    <button type="button" onclick="toggleDrawer('memoryBox')">🗂️ ความจำ (<span id="memCount">0</span>)</button>
     <select id="models"><option value="">โมเดล...</option></select>
     <button type="button" onclick="loadModels()">↻</button>
-    <button type="button" onclick="toggleSettings()">⚙️</button>
+    <button type="button" onclick="toggleDrawer('settings')">⚙️</button>
     <button type="button" onclick="clearChat()">🗑️</button>
   </div>
 </header>
 
-<div id="settings">
+<div id="memoryBox" class="drawer">
+  <div class="row">
+    <label>เพิ่มความจำหรือข้อมูลสำคัญให้ AI หยิบไปใช้เสมอ</label>
+    <div style="display:flex; gap:8px;">
+      <input id="newMemInput" type="text" style="flex:1;" placeholder="เช่น ชอบใช้ Python และทำงานกับไฟล์ CSV..." onkeydown="if(event.key==='Enter') addManualMemory()">
+      <button class="primary" type="button" onclick="addManualMemory()">+ บันทึก</button>
+    </div>
+  </div>
+  <div class="row">
+    <label>คลังข้อมูล / โน้ตถาวร (AI จะอ่านข้อมูลนี้ประกอบคำตอบเสมอ)</label>
+    <textarea id="knowledgeInput" placeholder="วางข้อมูลอ้างอิง กฎการทำงาน หรือรายละเอียดโปรเจกต์ที่อยากให้ AI หยิบใช้ตลอด..."></textarea>
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:4px;">
+      <button class="primary" type="button" onclick="saveKnowledge()">บันทึกคลังข้อมูล</button>
+    </div>
+  </div>
+  <div class="row">
+    <label>รายการความจำที่บันทึกไว้</label>
+    <div id="memList" class="mem-list"></div>
+  </div>
+</div>
+
+<div id="settings" class="drawer">
   <div class="grid3">
     <div class="row">
       <label>OLLAMA URL (https://...)</label>
@@ -223,7 +258,7 @@
     <textarea id="sysInput">คุณคือ S.H.A.D.O.W. ผู้ช่วยของ MJ ตอบตรงไปตรงมา กระชับ หากสร้างหรือแก้ไขไฟล์ให้ใส่โค้ดบล็อกพร้อมชื่อไฟล์ เช่น ```js:app.js```</textarea>
   </div>
   <div style="display:flex; justify-content:flex-end; gap:8px;">
-    <button type="button" onclick="toggleSettings()">ปิด</button>
+    <button type="button" onclick="toggleDrawer('settings')">ปิด</button>
     <button class="primary" type="button" onclick="saveCfg()">บันทึก</button>
   </div>
 </div>
@@ -242,7 +277,7 @@
     📎 ไฟล์
     <input type="file" multiple accept="image/*,.txt,.md,.csv,.json,.js,.ts,.html,.css,.py,.sql,.log" onchange="addFiles(this.files)">
   </label>
-  <input id="prompt" type="text" placeholder="พิมพ์คำสั่ง..." onkeydown="if(event.key==='Enter') send()">
+  <input id="prompt" type="text" placeholder="พิมพ์คำสั่ง หรือ 'จำไว้นะว่า...'" onkeydown="if(event.key==='Enter') send()">
   <button class="primary" type="button" onclick="send()">ส่ง</button>
 </footer>
 
@@ -251,9 +286,60 @@
   let mode = "chat";
   let files = [];
   let history = [];
+  let memories = [];
 
-  function toggleSettings() {
-    document.getElementById("settings").classList.toggle("show");
+  function toggleDrawer(id) {
+    const target = document.getElementById(id);
+    const willOpen = !target.classList.contains("show");
+    document.querySelectorAll(".drawer").forEach(d => d.classList.remove("show"));
+    if (willOpen) target.classList.add("show");
+  }
+
+  function renderMemories() {
+    localStorage.setItem("shadow_memories", JSON.stringify(memories));
+    document.getElementById("memCount").textContent = String(memories.length);
+    const box = document.getElementById("memList");
+    box.innerHTML = "";
+    if (memories.length === 0) {
+      box.innerHTML = '<div style="color:var(--dim); font-size:12px;">ยังไม่มีความจำที่บันทึกไว้</div>';
+      return;
+    }
+    memories.forEach((item, idx) => {
+      const row = document.createElement("div");
+      row.className = "mem-item";
+      const span = document.createElement("span");
+      span.textContent = "• " + item;
+      const del = document.createElement("button");
+      del.type = "button";
+      del.textContent = "ลบ";
+      del.onclick = () => {
+        memories.splice(idx, 1);
+        renderMemories();
+      };
+      row.appendChild(span);
+      row.appendChild(del);
+      box.appendChild(row);
+    });
+  }
+
+  function addManualMemory() {
+    const inp = document.getElementById("newMemInput");
+    const val = inp.value.trim();
+    if (!val) return;
+    memories.push(val);
+    inp.value = "";
+    renderMemories();
+  }
+
+  function saveKnowledge() {
+    localStorage.setItem("shadow_knowledge", document.getElementById("knowledgeInput").value);
+    toggleDrawer("memoryBox");
+  }
+
+  function extractRememberCommand(rawText) {
+    const match = rawText.match(/^(?:จำไว้นะ(?:ว่า)?|จำว่า|ช่วยจำว่า|บันทึก(?:ไว้นะ)?(?:ว่า)?|remember(?:\s+that)?[:\s]+)\s*(.+)$/i);
+    if (!match) return null;
+    return match[1].trim();
   }
 
   function toggleThink() {
@@ -279,7 +365,7 @@
     localStorage.setItem("shadow_img_api", imgApi);
     localStorage.setItem("shadow_ctx", document.getElementById("ctxInput").value);
     localStorage.setItem("shadow_sys", document.getElementById("sysInput").value);
-    toggleSettings();
+    toggleDrawer("settings");
     loadModels();
   }
 
@@ -303,7 +389,6 @@
         files.push({ name: f.name, isImg: false, text: txt.slice(0, 50000) });
       }
     }
-    document.getElementById("prompt").nextElementSibling;
     renderFiles();
   }
 
@@ -412,6 +497,13 @@
     return blocks;
   }
 
+  function buildMemoryContext() {
+    const knowledge = (document.getElementById("knowledgeInput").value || "").trim();
+    const memBlock = memories.length ? "รายการความจำที่ต้องยึดถือ:\n- " + memories.join("\n- ") : "";
+    const knowBlock = knowledge ? "คลังข้อมูลอ้างอิง:\n" + knowledge : "";
+    return [memBlock, knowBlock].filter(Boolean).join("\n\n");
+  }
+
   async function send() {
     const inp = document.getElementById("prompt");
     const text = inp.value.trim();
@@ -442,12 +534,23 @@
 
     const aDiv = document.createElement("div");
     aDiv.className = "msg ai";
-    aDiv.textContent = "กำลังประมวลผล...";
     chat.appendChild(aDiv);
+
+    const memorizedText = extractRememberCommand(text);
+    if (memorizedText && batch.length === 0 && mode === "chat") {
+      memories.push(memorizedText);
+      renderMemories();
+      aDiv.textContent = `จำไว้แล้วครับ MJ: "${memorizedText}" — หยิบมาใช้ต่อได้ตลอดเลย`;
+      chat.scrollTop = chat.scrollHeight;
+      return;
+    }
+
+    aDiv.textContent = "กำลังประมวลผล...";
     chat.scrollTop = chat.scrollHeight;
 
     if (mode === "image") {
-      const dataUrl = await buildImageOutput(text);
+      const memNote = buildMemoryContext();
+      const dataUrl = await buildImageOutput(memNote ? `${text} | ${memNote.slice(0, 180)}` : text);
       aDiv.innerHTML = "";
       const img = document.createElement("img");
       img.src = dataUrl;
@@ -488,7 +591,9 @@
     if (imgs.length) msg.images = imgs;
     history.push(msg);
 
-    const sys = document.getElementById("sysInput").value.trim();
+    const baseSys = document.getElementById("sysInput").value.trim();
+    const memContext = buildMemoryContext();
+    const sys = [baseSys, memContext].filter(Boolean).join("\n\n");
     const messages = sys ? [{ role: "system", content: sys }, ...history] : history;
 
     try {
@@ -514,7 +619,7 @@
         if (thinkOn) {
           const det = document.createElement("details");
           det.className = "think";
-          det.innerHTML = `<summary>🧠 ความคิด</summary><div>${tm[1].trim().replace(/</g, "&lt;")}</div>`;
+          det.innerHTML = `<summary>🧠 ความคิด</summary><div>${tm[1].trim().replace(/</g, "<")}</div>`;
           aDiv.appendChild(det);
         }
       }
@@ -555,6 +660,14 @@
     if (localStorage.getItem("shadow_img_api")) document.getElementById("imgApiInput").value = localStorage.getItem("shadow_img_api");
     if (localStorage.getItem("shadow_ctx")) document.getElementById("ctxInput").value = localStorage.getItem("shadow_ctx");
     if (localStorage.getItem("shadow_sys")) document.getElementById("sysInput").value = localStorage.getItem("shadow_sys");
+    if (localStorage.getItem("shadow_knowledge")) document.getElementById("knowledgeInput").value = localStorage.getItem("shadow_knowledge");
+    try {
+      memories = JSON.parse(localStorage.getItem("shadow_memories") || "[]");
+      if (!Array.isArray(memories)) memories = [];
+    } catch {
+      memories = [];
+    }
+    renderMemories();
     loadModels();
   };
 </script>
