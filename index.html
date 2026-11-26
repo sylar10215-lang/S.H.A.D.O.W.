@@ -27,7 +27,9 @@
     * { box-sizing: border-box; }
     html, body {
       margin: 0;
-      min-height: 100dvh;
+      height: 100dvh;
+      max-height: 100dvh;
+      overflow: hidden;
       background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -55,34 +57,40 @@
       font-weight: 800;
       color: var(--accent);
       letter-spacing: 1px;
-      font-size: 16px;
+      font-size: 17px;
     }
     .dot {
-      width: 9px;
-      height: 9px;
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
       background: var(--err);
       display: inline-block;
     }
     .dot.on { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
-    .bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .bar { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
 
     select, input, textarea, button {
       background: var(--input);
       color: var(--text);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 7px 10px;
+      border-radius: 10px;
+      padding: 9px 12px;
       font-size: 16px;
       outline: none;
       touch-action: manipulation;
     }
     header select, header button, .tools button {
-      font-size: 13px;
-      padding: 7px 10px;
+      font-size: 14px;
+      padding: 8px 12px;
+      min-height: 38px;
     }
-    select { max-width: 165px; }
-    button { cursor: pointer; }
+    footer button, .upload {
+      min-height: 44px;
+      padding: 9px 14px;
+      font-size: 15px;
+    }
+    select { max-width: 175px; }
+    button { cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
     button:hover { background: #243040; }
     .primary { background: var(--accent); color: #05111a; font-weight: 700; border: none; }
     .active-mode { border-color: var(--accent); color: var(--accent); font-weight: 700; }
@@ -100,13 +108,13 @@
       padding: 12px;
       flex-direction: column;
       gap: 8px;
-      max-height: 45dvh;
+      max-height: 42dvh;
       overflow-y: auto;
       flex-shrink: 0;
     }
     .drawer.show { display: flex; }
     .row { display: flex; flex-direction: column; gap: 4px; }
-    .row label { font-size: 11px; color: var(--dim); font-weight: 700; }
+    .row label { font-size: 12px; color: var(--dim); font-weight: 700; }
     .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     @media (max-width: 720px) { .grid3 { grid-template-columns: 1fr; } }
     textarea { min-height: 60px; resize: vertical; font-family: inherit; }
@@ -137,22 +145,43 @@
     .tag {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 4px 8px;
-      font-size: 12px;
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-size: 13px;
       display: inline-flex;
       align-items: center;
       gap: 6px;
     }
 
+    /* เลื่อนได้เฉพาะกล่องข้อความแชทเท่านั้น */
     #chat {
       flex: 1;
-      min-height: 160px;
+      min-height: 0;
       overflow-y: auto;
+      overscroll-behavior: contain;
       padding: 12px;
       display: flex;
       flex-direction: column;
       gap: 10px;
+    }
+    .turn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .turn-user {
+      align-self: flex-end;
+      max-width: 85%;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+    }
+    .standalone-img {
+      max-width: 280px;
+      border-radius: 10px;
+      display: block;
+      border: 1px solid var(--border);
     }
     .msg {
       max-width: 85%;
@@ -163,8 +192,26 @@
       white-space: pre-wrap;
       word-break: break-word;
     }
-    .user { background: #005885; color: #fff; align-self: flex-end; }
-    .ai { background: var(--panel); border: 1px solid var(--border); align-self: flex-start; }
+    .user {
+      background: #005885;
+      color: #fff;
+      align-self: flex-end;
+    }
+    .ai {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      align-self: flex-start;
+    }
+    .mem-saved-badge {
+      align-self: flex-start;
+      background: rgba(46, 213, 115, 0.12);
+      border: 1px solid rgba(46, 213, 115, 0.4);
+      color: var(--ok);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 13px;
+      max-width: 85%;
+    }
     details.think {
       background: rgba(0,168,255,0.07);
       border: 1px solid rgba(0,168,255,0.25);
@@ -189,12 +236,28 @@
       font-family: monospace;
       font-size: 13px;
     }
-    .msg img {
-      max-width: 260px;
-      border-radius: 8px;
-      margin-bottom: 6px;
-      display: block;
-      border: 1px solid rgba(255,255,255,0.14);
+    .gen-img-box {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* แถบข้อความสถานะเรียลไทม์เล็กๆ */
+    .live-status {
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      padding: 5px 12px;
+      font-size: 12px;
+      color: var(--accent);
+      min-height: 26px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .token-bar-wrap {
@@ -260,14 +323,12 @@
       overflow: hidden;
       background: var(--input);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 7px 10px;
-      font-size: 14px;
+      border-radius: 10px;
       cursor: pointer;
       white-space: nowrap;
     }
     .upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-    #prompt { flex: 1; min-width: 0; }
+    #prompt { flex: 1; min-width: 0; min-height: 44px; }
   </style>
 </head>
 <body>
@@ -337,6 +398,8 @@
 <div id="filesBar"></div>
 <div id="chat"></div>
 
+<div id="liveStatus" class="live-status">⚡ พร้อมใช้งาน</div>
+
 <div class="token-bar-wrap">
   <div class="token-meta">
     <span>📊 Token / Context ในแชทนี้: <span id="tokenText" class="token-value">ใช้ไป 0 / ทั้งหมด 4,096</span></span>
@@ -364,9 +427,9 @@
 
 <script>
   const STORAGE_KEYS = {
-    chatUi: "shadow_saved_chat_ui_v1",
-    chatHistory: "shadow_saved_history_v1",
-    exactTokens: "shadow_exact_tokens_v1"
+    chatUi: "shadow_saved_chat_ui_v2",
+    chatHistory: "shadow_saved_history_v2",
+    exactTokens: "shadow_exact_tokens_v2"
   };
 
   let thinkOn = true;
@@ -377,6 +440,11 @@
   let exactContextTokens = 0;
   let installPromptEvent = null;
 
+  function setLiveStatus(msg) {
+    const el = document.getElementById("liveStatus");
+    if (el) el.textContent = msg || "⚡ พร้อมใช้งาน";
+  }
+
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
       navigator.serviceWorker.register("./sw.js").catch(() => {});
@@ -386,7 +454,7 @@
   window.addEventListener("beforeinstallprompt", (e) => {
     e.preventDefault();
     installPromptEvent = e;
-    document.getElementById("installBtn").style.display = "inline-block";
+    document.getElementById("installBtn").style.display = "inline-flex";
   });
 
   async function installApp() {
@@ -548,19 +616,30 @@
     updateTokenMeter();
   }
 
+  function saveMemoryItem(val) {
+    const clean = (val || "").trim();
+    if (!clean) return false;
+    if (!memories.includes(clean)) {
+      memories.push(clean);
+      renderMemories();
+    }
+    return true;
+  }
+
   function addManualMemory() {
     const inp = document.getElementById("newMemInput");
     const val = inp.value.trim();
     if (!val) return;
-    memories.push(val);
+    saveMemoryItem(val);
     inp.value = "";
-    renderMemories();
+    setLiveStatus(`🗂️ เพิ่มความจำแล้ว: "${val}"`);
   }
 
   function saveKnowledge() {
     localStorage.setItem("shadow_knowledge", document.getElementById("knowledgeInput").value);
     toggleDrawer("memoryBox");
     updateTokenMeter();
+    setLiveStatus("📚 บันทึกคลังข้อมูลเรียบร้อย");
   }
 
   function extractRememberCommand(rawText) {
@@ -605,6 +684,7 @@
     localStorage.removeItem(STORAGE_KEYS.chatHistory);
     localStorage.removeItem(STORAGE_KEYS.exactTokens);
     updateTokenMeter();
+    setLiveStatus("🗑️ ล้างประวัติแชตแล้ว");
   }
 
   async function addFiles(list) {
@@ -750,54 +830,67 @@
     if (!text && batch.length === 0) return;
 
     const chat = document.getElementById("chat");
-    const uDiv = document.createElement("div");
-    uDiv.className = "msg user";
+    const turn = document.createElement("div");
+    turn.className = "turn-group";
 
-    batch.forEach(f => {
-      if (f.isImg && f.url) {
-        const img = document.createElement("img");
-        img.src = f.url;
-        uDiv.appendChild(img);
-      }
+    const imgBatch = batch.filter(f => f.isImg && f.url);
+    imgBatch.forEach(f => {
+      const img = document.createElement("img");
+      img.src = f.url;
+      img.className = "standalone-img";
+      img.style.alignSelf = "flex-end";
+      turn.appendChild(img);
     });
 
-    const labelText = document.createElement("div");
-    labelText.textContent = (text || (batch.some(x => x.isImg) ? "ดูรูปภาพนี้" : "วิเคราะห์ไฟล์นี้")) +
-      (batch.length ? "\n[" + batch.map(x => x.name).join(", ") + "]" : "");
-    uDiv.appendChild(labelText);
-    chat.appendChild(uDiv);
+    const msgLabel = text || (imgBatch.length && batch.length === imgBatch.length ? "ส่งรูปภาพ" : "วิเคราะห์ไฟล์");
+    const fileNames = batch.filter(f => !f.isImg).map(f => f.name);
+    const uDiv = document.createElement("div");
+    uDiv.className = "msg user";
+    uDiv.textContent = msgLabel + (fileNames.length ? "\n[ไฟล์: " + fileNames.join(", ") + "]" : "");
+    turn.appendChild(uDiv);
+
+    chat.appendChild(turn);
 
     inp.value = "";
     files = [];
     renderFiles();
     updateTokenMeter();
-
-    const aDiv = document.createElement("div");
-    aDiv.className = "msg ai";
-    chat.appendChild(aDiv);
+    chat.scrollTop = chat.scrollHeight;
 
     const memorizedText = extractRememberCommand(text);
     if (memorizedText && batch.length === 0 && mode === "chat") {
-      memories.push(memorizedText);
-      renderMemories();
-      aDiv.textContent = `จำไว้แล้วครับ MJ: "${memorizedText}" — หยิบมาใช้ต่อได้ตลอดเลย`;
+      setLiveStatus(`🗂️ กำลังเพิ่มความจำ: "${memorizedText}"...`);
+      saveMemoryItem(memorizedText);
+      const badge = document.createElement("div");
+      badge.className = "mem-saved-badge";
+      badge.textContent = `✅ เพิ่มลงช่องความจำแล้ว: "${memorizedText}"`;
+      turn.appendChild(badge);
+      setLiveStatus(`✅ เพิ่มความจำแล้ว: "${memorizedText}"`);
       persistChatState();
       chat.scrollTop = chat.scrollHeight;
       return;
     }
 
+    const aDiv = document.createElement("div");
+    aDiv.className = "msg ai";
     aDiv.textContent = "กำลังประมวลผล...";
+    turn.appendChild(aDiv);
     chat.scrollTop = chat.scrollHeight;
 
     if (mode === "image") {
+      setLiveStatus(`🎨 AI กำลังเจนรูปภาพ: "${text || "S.H.A.D.O.W. Visual"}"...`);
       const memNote = buildMemoryContext();
       const dataUrl = await buildImageOutput(memNote ? `${text} | ${memNote.slice(0, 180)}` : text);
-      aDiv.innerHTML = "";
+      aDiv.innerHTML = `<div style="font-size:12px; color:var(--dim);">สร้างรูปภาพเสร็จแล้ว</div>`;
+      const box = document.createElement("div");
+      box.className = "gen-img-box";
       const img = document.createElement("img");
       img.src = dataUrl;
+      img.className = "standalone-img";
       const btn = document.createElement("button");
       btn.className = "primary img-dl-btn";
       btn.type = "button";
+      btn.style.alignSelf = "flex-start";
       btn.dataset.src = dataUrl;
       btn.dataset.fname = "shadow-image.png";
       btn.textContent = "⬇ ดาวน์โหลดรูป";
@@ -807,8 +900,10 @@
         a.download = "shadow-image.png";
         a.click();
       };
-      aDiv.appendChild(img);
-      aDiv.appendChild(btn);
+      box.appendChild(img);
+      box.appendChild(btn);
+      aDiv.appendChild(box);
+      setLiveStatus("✅ เจนรูปภาพเรียบร้อย");
       persistChatState();
       chat.scrollTop = chat.scrollHeight;
       return;
@@ -818,13 +913,14 @@
     const model = document.getElementById("models").value;
     if (!url || !model) {
       aDiv.textContent = "ตั้งค่า URL ใน ⚙️ และเลือกโมเดลก่อนครับ";
+      setLiveStatus("⚠️ ยังไม่ได้ตั้งค่า URL หรือโมเดล");
       persistChatState();
       return;
     }
 
     const docList = batch.filter(x => !x.isImg);
     const docText = docList.map(x => `\n--- ไฟล์: ${x.name} ---\n${x.text}\n--- จบไฟล์ ${x.name} ---`).join("");
-    const imgs = batch.filter(x => x.isImg).map(x => x.b64);
+    const imgs = imgBatch.map(x => x.b64);
 
     let promptOut = (text || (imgs.length ? "อธิบายและวิเคราะห์รูปภาพนี้" : "วิเคราะห์ไฟล์นี้")) + docText;
     if (mode === "file") {
@@ -842,6 +938,7 @@
     const messages = sys ? [{ role: "system", content: sys }, ...history] : history;
 
     try {
+      setLiveStatus(thinkOn ? "🧠 AI กำลังคิดและวิเคราะห์คำตอบ..." : "⚡ AI กำลังประมวลผลคำตอบ...");
       const r = await fetch(url + "/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -865,11 +962,13 @@
       let bodyText = raw;
       const tm = raw.match(/<think>([\s\S]*?)<\/think>/i);
       if (tm) {
+        const thoughtText = tm[1].trim();
         bodyText = raw.replace(/<think>[\s\S]*?<\/think>/i, "").trim();
         if (thinkOn) {
+          setLiveStatus(`🧠 AI คิดเสร็จแล้ว: "${thoughtText.slice(0, 70).replace(/\s+/g, " ")}"`);
           const det = document.createElement("details");
           det.className = "think";
-          det.innerHTML = `<summary>🧠 ความคิด</summary><div>${tm[1].trim().replace(/</g, "<")}</div>`;
+          det.innerHTML = `<summary>🧠 ความคิด: ${thoughtText.slice(0, 60).replace(/</g, "<").replace(/\s+/g, " ")}...</summary><div>${thoughtText.replace(/</g, "<")}</div>`;
           aDiv.appendChild(det);
         }
       }
@@ -880,6 +979,7 @@
 
       const fileBlocks = parseFileBlocks(bodyText, docList);
       fileBlocks.forEach(fb => {
+        setLiveStatus(`📄 เตรียมไฟล์ "${fb.name}" พร้อมแก้ไขและดาวน์โหลด`);
         const box = document.createElement("div");
         box.className = "file-box";
         const nameIn = document.createElement("input");
@@ -897,8 +997,11 @@
         box.appendChild(ed);
         aDiv.appendChild(box);
       });
+
+      setLiveStatus("✅ ตอบกลับเสร็จแล้ว");
     } catch {
       aDiv.textContent = "เชื่อมต่อไม่ได้";
+      setLiveStatus("❌ เชื่อมต่อ Ollama ไม่ได้");
     }
     persistChatState();
     updateTokenMeter();
