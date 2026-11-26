@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#00a8ff">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>S.H.A.D.O.W. // AI Workspace</title>
   <link id="manifest-link" rel="manifest" href="">
   <style>
@@ -22,7 +20,6 @@
       --border: #263142;
       --success: #2ed573;
       --danger: #ff4757;
-      --warn: #ffa502;
     }
     * { box-sizing: border-box; }
     body {
@@ -45,7 +42,7 @@
       border-bottom: 1px solid var(--border);
       gap: 8px;
       flex-wrap: wrap;
-      z-index: 10;
+      z-index: 20;
     }
     .brand {
       display: flex;
@@ -84,8 +81,16 @@
       outline: none;
     }
     select:focus, input:focus, textarea:focus { border-color: var(--accent); }
-    select { max-width: 190px; cursor: pointer; }
-    button { cursor: pointer; transition: 0.15s; display: inline-flex; align-items: center; gap: 5px; }
+    select { max-width: 180px; cursor: pointer; }
+    button {
+      cursor: pointer;
+      transition: 0.15s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      touch-action: manipulation;
+    }
     button:hover { background: #242f3f; }
     button.primary {
       background: var(--accent);
@@ -116,8 +121,9 @@
       gap: 10px;
       max-height: 55vh;
       overflow-y: auto;
+      z-index: 15;
     }
-    #settingsPanel.open { display: flex; }
+    #settingsPanel.open { display: flex !important; }
     .setting-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
     @media (max-width: 760px) { .setting-grid { grid-template-columns: 1fr; } }
     .setting-row { display: flex; flex-direction: column; gap: 5px; }
@@ -307,14 +313,14 @@
   </div>
 
   <div class="controls">
-    <button id="installBtn" class="install-btn" style="display:none;" onclick="installPWA()">⬇ ติดตั้งแอป</button>
-    <button id="thinkToggleBtn" class="toggle-on" onclick="toggleThinking()" title="เปิด/ปิด โหมดใช้ความคิด">🧠 คิด: เปิด</button>
+    <button id="installBtn" class="install-btn" style="display:none;" type="button" onclick="installPWA()">⬇ ติดตั้งแอป</button>
+    <button id="thinkToggleBtn" class="toggle-on" type="button" onclick="toggleThinking()" title="เปิด/ปิด โหมดใช้ความคิด">🧠 คิด: เปิด</button>
     <select id="modelSelect" title="เลือกโมเดล">
       <option value="">กำลังโหลดโมเดล...</option>
     </select>
-    <button onclick="fetchModels()" title="รีเฟรชโมเดล">↻</button>
-    <button onclick="toggleSettings()" title="ตั้งค่า">⚙️</button>
-    <button onclick="clearChat()" title="ล้างแชต">🗑️</button>
+    <button type="button" onclick="fetchModels()" title="รีเฟรชโมเดล">↻</button>
+    <button id="settingsBtn" type="button" onclick="toggleSettings()" title="ตั้งค่า">⚙️</button>
+    <button type="button" onclick="clearChat()" title="ล้างแชต">🗑️</button>
   </div>
 </header>
 
@@ -338,7 +344,8 @@
     <textarea id="systemPrompt">คุณคือ S.H.A.D.O.W. ผู้ช่วย AI ส่วนตัวของ MJ ตอบตรงไปตรงมา กระชับ ทำงานแม่นยำ เมื่อถูกขอให้สร้างหรือแก้ไขไฟล์งาน ให้ส่งโค้ด/เนื้อหาไฟล์พร้อมระบุชื่อไฟล์ให้ชัดเจน</textarea>
   </div>
   <div style="display:flex; justify-content:flex-end; gap:8px;">
-    <button class="primary" onclick="saveSettings()">บันทึกการตั้งค่า</button>
+    <button type="button" onclick="toggleSettings()">ปิด</button>
+    <button class="primary" type="button" onclick="saveSettings()">บันทึกการตั้งค่า</button>
   </div>
 </div>
 
@@ -348,9 +355,9 @@
 
 <div class="mode-strip">
   <span style="font-size:11px; color:var(--text-dim);">โหมดงาน:</span>
-  <button class="mode-pill active" data-mode="chat" onclick="setWorkMode('chat')">💬 แชต / วิเคราะห์</button>
-  <button class="mode-pill" data-mode="file" onclick="setWorkMode('file')">📄 สร้าง / แก้ไขไฟล์</button>
-  <button class="mode-pill" data-mode="image" onclick="setWorkMode('image')">🎨 เจนรูปภาพ</button>
+  <button class="mode-pill active" type="button" data-mode="chat" onclick="setWorkMode('chat')">💬 แชต / วิเคราะห์</button>
+  <button class="mode-pill" type="button" data-mode="file" onclick="setWorkMode('file')">📄 สร้าง / แก้ไขไฟล์</button>
+  <button class="mode-pill" type="button" data-mode="image" onclick="setWorkMode('image')">🎨 เจนรูปภาพ</button>
 </div>
 
 <footer>
@@ -359,45 +366,53 @@
     <input type="file" id="docInput" multiple accept="image/*,.txt,.md,.csv,.json,.js,.ts,.html,.css,.py,.java,.cpp,.c,.sql,.xml,.yaml,.yml,.log" onchange="handleFiles(this.files)">
   </label>
   <input type="text" id="prompt" placeholder="พิมพ์คำสั่งให้ S.H.A.D.O.W. ..." onkeypress="if(event.key==='Enter') send()">
-  <button class="primary" onclick="send()">ส่ง</button>
+  <button class="primary" type="button" onclick="send()">ส่ง</button>
 </footer>
 
 <script>
+  // ฟังก์ชันเปิด-ปิดหน้าตั้งค่าแยกอิสระ
+  function toggleSettings() {
+    const panel = document.getElementById("settingsPanel");
+    if (!panel) return;
+    panel.classList.toggle("open");
+  }
+
   let chatHistory = [];
-  let attachedFiles = []; // { name, type, isImage, base64, textContent, previewUrl }
+  let attachedFiles = [];
   let thinkEnabled = true;
-  let workMode = 'chat';
+  let workMode = "chat";
   let deferredPrompt = null;
 
-  // ตั้งค่า PWA Manifest แบบฝังตัวเพื่อให้ติดตั้งลงเครื่องได้ทันที
   (function setupPWA() {
-    const manifest = {
-      name: "S.H.A.D.O.W. AI Workspace",
-      short_name: "S.H.A.D.O.W.",
-      start_url: ".",
-      display: "standalone",
-      background_color: "#090c10",
-      theme_color: "#00a8ff",
-      icons: [
-        {
-          src: "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><rect width="128" height="128" rx="26" fill="#0d131c"/><circle cx="64" cy="64" r="34" fill="none" stroke="#00a8ff" stroke-width="8"/><circle cx="64" cy="64" r="12" fill="#00a8ff"/></svg>'),
-          sizes: "128x128",
-          type: "image/svg+xml"
-        }
-      ]
-    };
-    const blob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
-    document.getElementById("manifest-link").href = URL.createObjectURL(blob);
+    try {
+      const manifest = {
+        name: "S.H.A.D.O.W. AI Workspace",
+        short_name: "S.H.A.D.O.W.",
+        start_url: ".",
+        display: "standalone",
+        background_color: "#090c10",
+        theme_color: "#00a8ff",
+        icons: [
+          {
+            src: "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><rect width="128" height="128" rx="26" fill="#0d131c"/><circle cx="64" cy="64" r="34" fill="none" stroke="#00a8ff" stroke-width="8"/><circle cx="64" cy="64" r="12" fill="#00a8ff"/></svg>'),
+            sizes: "128x128",
+            type: "image/svg+xml"
+          }
+        ]
+      };
+      const blob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
+      document.getElementById("manifest-link").href = URL.createObjectURL(blob);
 
-    if ("serviceWorker" in navigator) {
-      const swCode = `
-        self.addEventListener("install", e => self.skipWaiting());
-        self.addEventListener("activate", e => e.waitUntil(self.clients.claim()));
-        self.addEventListener("fetch", e => {});
-      `;
-      const swBlob = new Blob([swCode], { type: "application/javascript" });
-      navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
-    }
+      if ("serviceWorker" in navigator) {
+        const swCode = `
+          self.addEventListener("install", e => self.skipWaiting());
+          self.addEventListener("activate", e => e.waitUntil(self.clients.claim()));
+          self.addEventListener("fetch", e => {});
+        `;
+        const swBlob = new Blob([swCode], { type: "application/javascript" });
+        navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
+      }
+    } catch (e) {}
   })();
 
   window.addEventListener("beforeinstallprompt", (e) => {
@@ -417,30 +432,32 @@
     document.getElementById("installBtn").style.display = "none";
   }
 
-  window.onload = () => {
-    const params = new URLSearchParams(window.location.search);
-    const qUrl = params.get("url");
-    if (qUrl) {
-      localStorage.setItem("shadow_url", qUrl.trim());
-    }
-    if (localStorage.getItem("shadow_url")) {
-      document.getElementById("serverUrl").value = localStorage.getItem("shadow_url");
-    }
-    if (localStorage.getItem("shadow_img_api")) {
-      document.getElementById("imageApiUrl").value = localStorage.getItem("shadow_img_api");
-    }
-    if (localStorage.getItem("shadow_ctx")) {
-      document.getElementById("numCtx").value = localStorage.getItem("shadow_ctx");
-    }
-    if (localStorage.getItem("shadow_sys")) {
-      document.getElementById("systemPrompt").value = localStorage.getItem("shadow_sys");
-    }
-    if (localStorage.getItem("shadow_think") !== null) {
-      thinkEnabled = localStorage.getItem("shadow_think") === "true";
-      renderThinkButton();
-    }
-    fetchModels();
-  };
+  window.addEventListener("DOMContentLoaded", () => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const qUrl = params.get("url");
+      if (qUrl) {
+        localStorage.setItem("shadow_url", qUrl.trim());
+      }
+      if (localStorage.getItem("shadow_url")) {
+        document.getElementById("serverUrl").value = localStorage.getItem("shadow_url");
+      }
+      if (localStorage.getItem("shadow_img_api")) {
+        document.getElementById("imageApiUrl").value = localStorage.getItem("shadow_img_api");
+      }
+      if (localStorage.getItem("shadow_ctx")) {
+        document.getElementById("numCtx").value = localStorage.getItem("shadow_ctx");
+      }
+      if (localStorage.getItem("shadow_sys")) {
+        document.getElementById("systemPrompt").value = localStorage.getItem("shadow_sys");
+      }
+      if (localStorage.getItem("shadow_think") !== null) {
+        thinkEnabled = localStorage.getItem("shadow_think") === "true";
+        renderThinkButton();
+      }
+      fetchModels();
+    } catch (e) {}
+  });
 
   function toggleThinking() {
     thinkEnabled = !thinkEnabled;
@@ -467,10 +484,6 @@
     } else {
       promptEl.placeholder = "พิมพ์คำสั่งหรือให้ช่วยวิเคราะห์ไฟล์ที่แนบมา...";
     }
-  }
-
-  function toggleSettings() {
-    document.getElementById("settingsPanel").classList.toggle("open");
   }
 
   function saveSettings() {
@@ -529,7 +542,7 @@
     attachedFiles.forEach((f, idx) => {
       const chip = document.createElement("div");
       chip.className = "chip";
-      chip.innerHTML = `<span>${f.isImage ? "🖼️" : "📄"} ${escapeHtml(f.name)}</span><button onclick="removeAttachment(${idx})" title="ลบไฟล์">×</button>`;
+      chip.innerHTML = `<span>${f.isImage ? "🖼️" : "📄"} ${escapeHtml(f.name)}</span><button type="button" onclick="removeAttachment(${idx})" title="ลบไฟล์">×</button>`;
       bar.appendChild(chip);
     });
   }
@@ -617,7 +630,7 @@
     return { thinkPart, cleanPart };
   }
 
-  function extractFileBlocks(text, fallbackPrompt) {
+  function extractFileBlocks(text) {
     const blocks = [];
     const regex = /```([a-zA-Z0-9_-]*)(?::([^\n]+))?\n([\s\S]*?)```/g;
     let match;
@@ -676,7 +689,6 @@
       } catch (e) {}
     }
 
-    // สร้างภาพกราฟิก/โปสเตอร์/ไดอะแกรมผ่าน HTML5 Canvas กรณีไม่ได้ต่อ Image API แยก
     const canvas = document.createElement("canvas");
     canvas.width = 768;
     canvas.height = 512;
@@ -742,6 +754,7 @@
 
     const dlBtn = document.createElement("button");
     dlBtn.className = "primary";
+    dlBtn.type = "button";
     dlBtn.style.alignSelf = "flex-start";
     dlBtn.textContent = "⬇ ดาวน์โหลดรูปภาพ";
     dlBtn.onclick = () => {
@@ -861,7 +874,7 @@
       bodyDiv.textContent = cleanPart || fullReply;
       aiDiv.appendChild(bodyDiv);
 
-      const fileBlocks = extractFileBlocks(cleanPart || fullReply, text);
+      const fileBlocks = extractFileBlocks(cleanPart || fullReply);
       fileBlocks.forEach(fb => {
         const card = document.createElement("div");
         card.className = "artifact-card";
@@ -878,6 +891,7 @@
 
         const dlBtn = document.createElement("button");
         dlBtn.className = "primary";
+        dlBtn.type = "button";
         dlBtn.style.padding = "5px 10px";
         dlBtn.style.fontSize = "12px";
         dlBtn.textContent = "⬇ ดาวน์โหลดไฟล์";
