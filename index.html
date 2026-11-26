@@ -21,6 +21,7 @@
       --dim: #8b98ad;
       --border: #263142;
       --ok: #2ed573;
+      --warn: #ffa502;
       --err: #ff4757;
       --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
@@ -67,7 +68,6 @@
     .dot.on { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
     .bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 
-    /* ขนาดฟอนต์ 16px กันมือถือซูมเข้าเองเวลาโฟกัสช่องพิมพ์ */
     select, input, textarea, button {
       background: var(--input);
       color: var(--text);
@@ -195,20 +195,58 @@
       border: 1px solid rgba(255,255,255,0.14);
     }
 
-    /* ดันแถบเมนูล่างสุดขึ้นมาให้มีระยะหายใจ ไม่ติดขอบจอเกินไป */
     .bottom-dock {
       background: var(--panel);
       border-top: 1px solid var(--border);
       padding-bottom: calc(14px + var(--safe-bottom));
     }
+
+    /* แถบแสดงจำนวน Token ที่ใช้ไป / ทั้งหมด */
+    .token-bar-wrap {
+      padding: 7px 12px 2px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .token-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--dim);
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .token-value {
+      color: var(--text);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    .token-track {
+      width: 100%;
+      height: 6px;
+      background: var(--input);
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .token-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      transition: width 0.25s ease, background-color 0.25s ease;
+    }
+    .token-fill.warn { background: var(--warn); }
+    .token-fill.danger { background: var(--err); }
+
     .tools {
-      padding: 8px 12px 4px;
+      padding: 6px 12px 4px;
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
     }
     footer {
-      padding: 8px 12px 4px;
+      padding: 6px 12px 4px;
       display: flex;
       gap: 8px;
       align-items: center;
@@ -278,13 +316,13 @@
       <input id="imgApiInput" type="text" placeholder="เว้นว่าง = สร้างภาพกราฟิกในเครื่อง">
     </div>
     <div class="row">
-      <label>NUM_CTX</label>
-      <input id="ctxInput" type="number" value="4096">
+      <label>NUM_CTX (Parameter / Context สูงสุด)</label>
+      <input id="ctxInput" type="number" value="4096" onchange="updateTokenMeter()">
     </div>
   </div>
   <div class="row">
     <label>SYSTEM PROMPT</label>
-    <textarea id="sysInput">คุณคือ S.H.A.D.O.W. ผู้ช่วยของ MJ ตอบตรงไปตรงมา กระชับ หากสร้างหรือแก้ไขไฟล์ให้ใส่โค้ดบล็อกพร้อมชื่อไฟล์ เช่น ```js:app.js```</textarea>
+    <textarea id="sysInput" oninput="updateTokenMeter()">คุณคือ S.H.A.D.O.W. ผู้ช่วยของ MJ ตอบตรงไปตรงมา กระชับ หากสร้างหรือแก้ไขไฟล์ให้ใส่โค้ดบล็อกพร้อมชื่อไฟล์ เช่น ```js:app.js```</textarea>
   </div>
   <div style="display:flex; justify-content:flex-end; gap:8px;">
     <button type="button" onclick="toggleDrawer('settings')">ปิด</button>
@@ -296,6 +334,16 @@
 <div id="chat"></div>
 
 <div class="bottom-dock">
+  <div class="token-bar-wrap">
+    <div class="token-meta">
+      <span>📊 Token / Context ในแชทนี้: <span id="tokenText" class="token-value">ใช้ไป 0 / ทั้งหมด 4,096</span></span>
+      <span id="tokenPct">0%</span>
+    </div>
+    <div class="token-track">
+      <div id="tokenFill" class="token-fill"></div>
+    </div>
+  </div>
+
   <div class="tools">
     <button id="m-chat" class="active-mode" type="button" onclick="setMode('chat')">💬 วิเคราะห์/แชต</button>
     <button id="m-file" type="button" onclick="setMode('file')">📄 สร้าง/แก้ไฟล์</button>
@@ -307,17 +355,24 @@
       📎 ไฟล์
       <input type="file" multiple accept="image/*,.txt,.md,.csv,.json,.js,.ts,.html,.css,.py,.sql,.log" onchange="addFiles(this.files)">
     </label>
-    <input id="prompt" type="text" placeholder="พิมพ์คำสั่ง หรือ 'จำไว้นะว่า...'" onkeydown="if(event.key==='Enter') send()">
+    <input id="prompt" type="text" placeholder="พิมพ์คำสั่ง หรือ 'จำไว้นะว่า...'" oninput="updateTokenMeter()" onkeydown="if(event.key==='Enter') send()">
     <button class="primary" type="button" onclick="send()">ส่ง</button>
   </footer>
 </div>
 
 <script>
+  const STORAGE_KEYS = {
+    chatUi: "shadow_saved_chat_ui_v1",
+    chatHistory: "shadow_saved_history_v1",
+    exactTokens: "shadow_exact_tokens_v1"
+  };
+
   let thinkOn = true;
   let mode = "chat";
   let files = [];
   let history = [];
   let memories = [];
+  let exactContextTokens = 0;
   let installPromptEvent = null;
 
   if ("serviceWorker" in navigator) {
@@ -347,6 +402,121 @@
     if (willOpen) target.classList.add("show");
   }
 
+  function estimateTokensFromText(text) {
+    if (!text) return 0;
+    const thaiChars = (text.match(/[\u0E00-\u0E7F]/g) || []).length;
+    const otherChars = text.length - thaiChars;
+    return Math.ceil(thaiChars / 2.2 + otherChars / 4);
+  }
+
+  function getMaxContext() {
+    const val = parseInt(document.getElementById("ctxInput").value, 10);
+    return Number.isFinite(val) && val > 0 ? val : 4096;
+  }
+
+  function updateTokenMeter(overrideUsedTokens) {
+    const maxCtx = getMaxContext();
+    let used = 0;
+
+    if (typeof overrideUsedTokens === "number" && overrideUsedTokens > 0) {
+      exactContextTokens = overrideUsedTokens;
+      localStorage.setItem(STORAGE_KEYS.exactTokens, String(exactContextTokens));
+    }
+
+    const sysText = document.getElementById("sysInput").value || "";
+    const memText = buildMemoryContext();
+    const draftText = document.getElementById("prompt").value || "";
+    const draftFilesText = files.map(f => f.text || "").join("\n");
+    const draftImagesCount = files.filter(f => f.isImg).length;
+
+    const historyText = history
+      .map(m => (typeof m.content === "string" ? m.content : ""))
+      .join("\n");
+    const historyImagesCount = history.reduce(
+      (sum, m) => sum + (Array.isArray(m.images) ? m.images.length : 0),
+      0
+    );
+
+    const estimatedAll =
+      estimateTokensFromText(sysText) +
+      estimateTokensFromText(memText) +
+      estimateTokensFromText(historyText) +
+      estimateTokensFromText(draftText) +
+      estimateTokensFromText(draftFilesText) +
+      (historyImagesCount + draftImagesCount) * 256;
+
+    used = exactContextTokens > 0
+      ? Math.max(exactContextTokens, estimatedAll)
+      : estimatedAll;
+
+    const pct = Math.min(100, Math.round((used / maxCtx) * 100));
+    document.getElementById("tokenText").textContent =
+      `ใช้ไป ${used.toLocaleString()} / ทั้งหมด ${maxCtx.toLocaleString()}`;
+    document.getElementById("tokenPct").textContent = `${pct}%`;
+
+    const fill = document.getElementById("tokenFill");
+    fill.style.width = `${pct}%`;
+    fill.classList.remove("warn", "danger");
+    if (pct >= 85) fill.classList.add("danger");
+    else if (pct >= 65) fill.classList.add("warn");
+  }
+
+  function persistChatState() {
+    try {
+      const chatHtml = document.getElementById("chat").innerHTML;
+      localStorage.setItem(STORAGE_KEYS.chatUi, chatHtml);
+      const safeHistory = history.slice(-12).map(m => ({
+        role: m.role,
+        content: typeof m.content === "string" ? m.content.slice(0, 12000) : ""
+      }));
+      localStorage.setItem(STORAGE_KEYS.chatHistory, JSON.stringify(safeHistory));
+    } catch {}
+  }
+
+  function restoreChatState() {
+    try {
+      const savedUi = localStorage.getItem(STORAGE_KEYS.chatUi);
+      const savedHist = localStorage.getItem(STORAGE_KEYS.chatHistory);
+      const savedExact = parseInt(localStorage.getItem(STORAGE_KEYS.exactTokens) || "0", 10);
+      if (savedUi) {
+        document.getElementById("chat").innerHTML = savedUi;
+        rebindRestoredChatActions();
+      }
+      if (savedHist) {
+        const parsed = JSON.parse(savedHist);
+        if (Array.isArray(parsed)) history = parsed;
+      }
+      if (Number.isFinite(savedExact) && savedExact > 0) {
+        exactContextTokens = savedExact;
+      }
+      const chat = document.getElementById("chat");
+      chat.scrollTop = chat.scrollHeight;
+    } catch {}
+  }
+
+  function rebindRestoredChatActions() {
+    document.querySelectorAll("#chat .file-box").forEach(box => {
+      const nameIn = box.querySelector("input");
+      const dl = box.querySelector("button");
+      const ed = box.querySelector("textarea");
+      if (nameIn && dl && ed) {
+        dl.onclick = () => downloadFile(nameIn.value.trim(), ed.value);
+      }
+    });
+    document.querySelectorAll("#chat .img-dl-btn").forEach(btn => {
+      const src = btn.dataset.src;
+      const fname = btn.dataset.fname || "shadow-image.png";
+      if (src) {
+        btn.onclick = () => {
+          const a = document.createElement("a");
+          a.href = src;
+          a.download = fname;
+          a.click();
+        };
+      }
+    });
+  }
+
   function renderMemories() {
     localStorage.setItem("shadow_memories", JSON.stringify(memories));
     document.getElementById("memCount").textContent = String(memories.length);
@@ -354,6 +524,7 @@
     box.innerHTML = "";
     if (memories.length === 0) {
       box.innerHTML = '<div style="color:var(--dim); font-size:12px;">ยังไม่มีความจำที่บันทึกไว้</div>';
+      updateTokenMeter();
       return;
     }
     memories.forEach((item, idx) => {
@@ -372,6 +543,7 @@
       row.appendChild(del);
       box.appendChild(row);
     });
+    updateTokenMeter();
   }
 
   function addManualMemory() {
@@ -386,6 +558,7 @@
   function saveKnowledge() {
     localStorage.setItem("shadow_knowledge", document.getElementById("knowledgeInput").value);
     toggleDrawer("memoryBox");
+    updateTokenMeter();
   }
 
   function extractRememberCommand(rawText) {
@@ -418,12 +591,18 @@
     localStorage.setItem("shadow_ctx", document.getElementById("ctxInput").value);
     localStorage.setItem("shadow_sys", document.getElementById("sysInput").value);
     toggleDrawer("settings");
+    updateTokenMeter();
     loadModels();
   }
 
   function clearChat() {
     document.getElementById("chat").innerHTML = "";
     history = [];
+    exactContextTokens = 0;
+    localStorage.removeItem(STORAGE_KEYS.chatUi);
+    localStorage.removeItem(STORAGE_KEYS.chatHistory);
+    localStorage.removeItem(STORAGE_KEYS.exactTokens);
+    updateTokenMeter();
   }
 
   async function addFiles(list) {
@@ -435,13 +614,15 @@
           r.onerror = rej;
           r.readAsDataURL(f);
         });
-        files.push({ name: f.name, isImg: true, b64, url: URL.createObjectURL(f) });
+        const dataUrl = "data:" + (f.type || "image/png") + ";base64," + b64;
+        files.push({ name: f.name, isImg: true, b64, url: dataUrl });
       } else {
         const txt = await f.text();
         files.push({ name: f.name, isImg: false, text: txt.slice(0, 50000) });
       }
     }
     renderFiles();
+    updateTokenMeter();
   }
 
   function renderFiles() {
@@ -455,7 +636,11 @@
       const del = document.createElement("button");
       del.type = "button";
       del.textContent = "×";
-      del.onclick = () => { files.splice(i, 1); renderFiles(); };
+      del.onclick = () => {
+        files.splice(i, 1);
+        renderFiles();
+        updateTokenMeter();
+      };
       span.appendChild(del);
       bar.appendChild(span);
     });
@@ -583,6 +768,7 @@
     inp.value = "";
     files = [];
     renderFiles();
+    updateTokenMeter();
 
     const aDiv = document.createElement("div");
     aDiv.className = "msg ai";
@@ -593,6 +779,7 @@
       memories.push(memorizedText);
       renderMemories();
       aDiv.textContent = `จำไว้แล้วครับ MJ: "${memorizedText}" — หยิบมาใช้ต่อได้ตลอดเลย`;
+      persistChatState();
       chat.scrollTop = chat.scrollHeight;
       return;
     }
@@ -607,8 +794,10 @@
       const img = document.createElement("img");
       img.src = dataUrl;
       const btn = document.createElement("button");
-      btn.className = "primary";
+      btn.className = "primary img-dl-btn";
       btn.type = "button";
+      btn.dataset.src = dataUrl;
+      btn.dataset.fname = "shadow-image.png";
       btn.textContent = "⬇ ดาวน์โหลดรูป";
       btn.onclick = () => {
         const a = document.createElement("a");
@@ -618,6 +807,7 @@
       };
       aDiv.appendChild(img);
       aDiv.appendChild(btn);
+      persistChatState();
       chat.scrollTop = chat.scrollHeight;
       return;
     }
@@ -626,6 +816,7 @@
     const model = document.getElementById("models").value;
     if (!url || !model) {
       aDiv.textContent = "ตั้งค่า URL ใน ⚙️ และเลือกโมเดลก่อนครับ";
+      persistChatState();
       return;
     }
 
@@ -655,13 +846,18 @@
         body: JSON.stringify({
           model,
           stream: false,
-          options: { num_ctx: parseInt(document.getElementById("ctxInput").value, 10) || 4096 },
+          options: { num_ctx: getMaxContext() },
           messages
         })
       });
       const d = await r.json();
       const raw = (d.message && d.message.content) || "";
       history.push({ role: "assistant", content: raw });
+
+      const promptEval = Number(d.prompt_eval_count) || 0;
+      const evalCount = Number(d.eval_count) || 0;
+      const reportedTotal = promptEval + evalCount;
+      updateTokenMeter(reportedTotal > 0 ? reportedTotal : undefined);
 
       aDiv.innerHTML = "";
       let bodyText = raw;
@@ -702,6 +898,8 @@
     } catch {
       aDiv.textContent = "เชื่อมต่อไม่ได้";
     }
+    persistChatState();
+    updateTokenMeter();
     chat.scrollTop = chat.scrollHeight;
   }
 
@@ -720,6 +918,8 @@
       memories = [];
     }
     renderMemories();
+    restoreChatState();
+    updateTokenMeter();
     loadModels();
   };
 </script>
